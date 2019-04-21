@@ -7,11 +7,10 @@ func main() {
 	var n = 10
 	var sum int
 
-	for i := 1; i <= n; i++ {
-		var num = 1
-		for j := 1; j <= i; j++ {
-			num *= j
-		}
+	var num = 1
+	for j := 1; j <= n; j++ {
+		num *= j
+		fmt.Printf("%d!=%d\n", j, num)
 		sum += num
 	}
 
