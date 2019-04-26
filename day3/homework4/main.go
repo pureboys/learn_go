@@ -13,15 +13,17 @@ func main() {
 	var str string
 	Scans(&str)
 
-	for i := 0; i < len(str); i++ {
-		fmt.Println(int(str[i]))
+	runes := []rune(str)
+	for _, v := range runes {
 		switch {
-		case int(str[i]) == 32:
-			space++
-		case int(str[i]) >= 48 && int(str[i]) <= 57:
-			num++
-		case (int(str[i]) >= 65 && int(str[i]) <= 90) || (int(str[i]) >= 97 && int(str[i]) <= 122):
+		case v >= 'a' && v <= 'z':
+			fallthrough
+		case v >= 'A' && v <= 'Z':
 			charters++
+		case v == ' ':
+			space++
+		case v >= '0' && v <= '9':
+			num++
 		default:
 			others++
 		}
