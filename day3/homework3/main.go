@@ -13,10 +13,16 @@ func main() {
 }
 
 func palindromic(str string) {
-	lenStr := len(str)
 
-	for i := 0; i <= lenStr/2; i++ {
-		if str[i] != str[lenStr-1-i] {
+	t := []rune(str)
+	length := len(t)
+
+	for i := range t {
+		if i == length/2 {
+			break
+		}
+		last := length - i - 1
+		if t[i] != t[last] {
 			fmt.Printf("%s is not palindromic", str)
 			return
 		}
