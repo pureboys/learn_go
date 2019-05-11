@@ -16,8 +16,9 @@ func main() {
 	}
 	test(b)
 
-	testInt(1234)
-
+	var c = 1
+	testInt(&c)
+	fmt.Println(c)
 }
 
 type Student struct {
@@ -43,7 +44,9 @@ func test(b interface{}) {
 
 func testInt(b interface{}) {
 	val := reflect.ValueOf(b)
+	val.Elem().SetInt(100)
 
-	c := val.Int()
+	c := val.Elem().Int()
 	fmt.Printf("get value interface{} %d \n", c)
+	fmt.Printf("string val :%d\n", val.Elem().Int())
 }
