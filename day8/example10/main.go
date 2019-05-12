@@ -25,7 +25,7 @@ func main() {
 			fmt.Println(v)
 		case v := <-ch2:
 			fmt.Println(v)
-		default:
+		case <-time.After(time.Second):
 			fmt.Println("get data timeout")
 			time.Sleep(time.Second)
 		}
