@@ -13,7 +13,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	_, err = conn.Do("MSet", "books", "abc", 100, "efg", 300)
+	_, err = conn.Do("MSet", "abc", 100, "efg", 300)
 	if err != nil {
 		fmt.Println(err)
 		return
