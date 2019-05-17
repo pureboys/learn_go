@@ -1,7 +1,11 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 func main() {
-	InitRedis("localhost:6379", 16, 1024, time.Second*300)
+	initRedis("0.0.0.0:6379", 16, 1024, time.Second*300)
+	initUserMgr()
+	runServer("0.0.0.0:10000")
 }

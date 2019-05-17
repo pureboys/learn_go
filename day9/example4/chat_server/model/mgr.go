@@ -12,10 +12,10 @@ var (
 )
 
 type UserMgr struct {
-	pool redis.Pool
+	pool *redis.Pool
 }
 
-func NewUserMgr(pool redis.Pool) (mgr *UserMgr) {
+func NewUserMgr(pool *redis.Pool) (mgr *UserMgr) {
 	mgr = &UserMgr{
 		pool: pool,
 	}
