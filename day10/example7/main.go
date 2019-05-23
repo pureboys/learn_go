@@ -26,12 +26,26 @@ func userInfo(writer http.ResponseWriter, request *http.Request) {
 	fmt.Println("handle hello")
 	//fmt.Fprintf(writer, "hello ")
 
-	person := Person{
-		Name: "oliver",
+	var persons []Person
+	person1 := Person{
+		Name: "oliver1",
 		Age:  30,
 	}
+	person2 := Person{
+		Name: "oliver2",
+		Age:  31,
+	}
+	person3 := Person{
+		Name: "oliver3",
+		Age:  32,
+	}
+	persons = append(persons, person1, person2, person3)
 
-	myTemplate.Execute(writer, person)
+	//persons := make(map[string]interface{})
+	//persons["Name"] = "oliver"
+	//persons["Age"] = 30
+
+	myTemplate.Execute(writer, persons)
 
 	//file, err := os.OpenFile("/home/oliver/go/src/demo/day10/example7/test.log", os.O_CREATE|os.O_WRONLY, 0755)
 	//if err != nil {
@@ -39,7 +53,7 @@ func userInfo(writer http.ResponseWriter, request *http.Request) {
 	//	return
 	//}
 	//
-	//myTemplate.Execute(file, person)
+	//myTemplate.Execute(file, persons)
 }
 
 func iniTemplate(filename string) (err error) {

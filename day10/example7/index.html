@@ -9,17 +9,28 @@
 </head>
 <body>
 
-<p>hello, {{.Name}}</p>
-<p>{{.}}</p>
+{{/*<p>hello, {{.Name}}</p>*/}}
+{{/*<p>{{.}}</p>*/}}
 
-<p>
-    {{if gt .Age 18}}
-        hello, old man
-    {{else}}
-        hello, young man
+{{/*<p>*/}}
+    {{/*{{if gt .Age 18}}*/}}
+        {{/*hello, old man*/}}
+    {{/*{{else}}*/}}
+        {{/*hello, young man*/}}
+    {{/*{{end}}*/}}
+
+{{/*</p>*/}}
+
+
+<table>
+    {{range  .}}
+        <tr>
+            <td>{{.Name}}</td>
+            <td>{{.Age}}</td>
+        </tr>
     {{end}}
+</table>
 
-</p>
 
 
 </body>
