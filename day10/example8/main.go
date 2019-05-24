@@ -7,16 +7,16 @@ import (
 )
 
 type Person struct {
-	UserID   int    `db:user_id`
-	UserName string `db:user_name`
-	Sex      string `db:sex`
-	Email    string `db:email`
+	UserID   int    `db:"user_id"`
+	UserName string `db:"user_name"`
+	Sex      string `db:"sex"`
+	Email    string `db:"email"`
 }
 
 type Place struct {
-	Country string `db:country`
-	City    string `db:city`
-	TelCode int    `db:tel_code`
+	Country string `db:"country"`
+	City    string `db:"city"`
+	TelCode int    `db:"tel_code"`
 }
 
 var DB *sqlx.DB
