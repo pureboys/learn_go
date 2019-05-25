@@ -1,6 +1,8 @@
 package proto
 
-import "demo/day9/chat/chat_server/model"
+import (
+	"demo/day9/chat/common"
+)
 
 type Message struct {
 	Cmd  string `json:"cmd"`
@@ -13,10 +15,11 @@ type LoginCmd struct {
 }
 
 type RegisterCmd struct {
-	User model.User `json:"user"`
+	User common.User `json:"user"`
 }
 
 type LoginCmdRes struct {
 	Code  int    `json:"code"`
 	Error string `json:"error"`
+	User  []int  `json:"users"`
 }

@@ -1,3 +1,7 @@
 hset users 1 "{\"user_id\":1, \"passwd\":\"123456\"}"
 
+hset users 2 "{\"user_id\":2, \"passwd\":\"123456\"}"
+
+hset users 3 "{\"user_id\":3, \"passwd\":\"123456\"}"
+
 hget users 1

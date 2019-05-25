@@ -10,8 +10,9 @@ import (
 )
 
 type Client struct {
-	conn net.Conn
-	buf  [8192]byte
+	conn   net.Conn
+	buf    [8192]byte
+	userId int
 }
 
 func (p *Client) readPackage() (msg *proto.Message, err error) {
@@ -73,12 +74,16 @@ func (p *Client) Process() (err error) {
 		var msg *proto.Message
 		msg, err = p.readPackage()
 		if err != nil {
+			clientMgr.DelClient(p.userId)
+			// todo 通知所有在线用户， 该用户已经下线
 			return err
 		}
 
 		err = p.processMsg(msg)
 		if err != nil {
-			return err
+			//return err
+			fmt.Println("process msg failed,", err)
+			continue
 		}
 	}
 }
@@ -116,6 +121,9 @@ func (p *Client) login(msg *proto.Message) (err error) {
 		return
 	}
 
+	clientMgr.AddClient(cmd.Id, p)
+	p.userId = cmd.Id
+
 	return
 }
 
@@ -140,6 +148,12 @@ func (p *Client) loginResp(err error) {
 
 	var loginRes proto.LoginCmdRes
 	loginRes.Code = 200
+
+	userMap := clientMgr.GetAllUsers()
+	for userId := range userMap {
+		loginRes.User = append(loginRes.User, userId)
+	}
+
 	if err != nil {
 		loginRes.Code = 500
 		loginRes.Error = fmt.Sprintf("%v", err)
