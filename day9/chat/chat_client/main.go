@@ -1,7 +1,7 @@
 package main
 
 import (
-	"demo/day9/example4/proto"
+	"demo/day9/chat/proto"
 	"encoding/binary"
 	"encoding/json"
 	"errors"

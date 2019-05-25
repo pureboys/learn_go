@@ -1,6 +1,6 @@
 package main
 
-import "demo/day9/example4/chat_server/model"
+import "demo/day9/chat/chat_server/model"
 
 var (
 	mgr *model.UserMgr

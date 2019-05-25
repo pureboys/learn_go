@@ -51,6 +51,7 @@ func (p *UserMgr) Login(id int, passwd string) (user *User, err error) {
 
 	if user.UserId != id || user.Passwd != passwd {
 		err = ErrInvalidPasswd
+		return
 	}
 
 	user.Status = UserStatusOnline
