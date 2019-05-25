@@ -95,6 +95,8 @@ func (p *Client) processMsg(msg *proto.Message) (err error) {
 		err = p.login(msg)
 	case proto.UserRegister:
 		err = p.register(msg)
+	case proto.UserSendMessageCmd:
+		err = p.processUserSendMessage(msg)
 	default:
 		err = errors.New("unsupport message")
 		return
@@ -123,6 +125,8 @@ func (p *Client) login(msg *proto.Message) (err error) {
 
 	clientMgr.AddClient(cmd.Id, p)
 	p.userId = cmd.Id
+
+	p.NotifyOthersUserOnline(cmd.Id)
 
 	return
 }
@@ -160,6 +164,91 @@ func (p *Client) loginResp(err error) {
 	}
 
 	data, err := json.Marshal(loginRes)
+	if err != nil {
+		fmt.Println("marshal failed ", err)
+		return
+	}
+
+	respMsg.Data = string(data)
+	data, err = json.Marshal(respMsg)
+	if err != nil {
+		fmt.Println("marshal failed ", err)
+		return
+	}
+	err = p.writePackage(data)
+	if err != nil {
+		fmt.Println("send failed ", err)
+		return
+	}
+	return
+}
+
+func (p *Client) NotifyOthersUserOnline(userId int) {
+	users := clientMgr.GetAllUsers()
+	for id, client := range users {
+		if id == userId {
+			continue
+		}
+		client.NotifyUserOnline(userId)
+	}
+}
+
+func (p *Client) NotifyUserOnline(userId int) {
+	var respMsg proto.Message
+	respMsg.Cmd = proto.UserStatusNotifyRes
+
+	var notifyRes proto.UserStatusNotify
+	notifyRes.UserId = userId
+	notifyRes.Status = proto.UserOnline
+
+	data, err := json.Marshal(notifyRes)
+	if err != nil {
+		fmt.Println("marshal failed ", err)
+		return
+	}
+
+	respMsg.Data = string(data)
+	data, err = json.Marshal(respMsg)
+	if err != nil {
+		fmt.Println("marshal failed ", err)
+		return
+	}
+	err = p.writePackage(data)
+	if err != nil {
+		fmt.Println("send failed ", err)
+		return
+	}
+	return
+}
+
+func (p *Client) processUserSendMessage(msg *proto.Message) (err error) {
+
+	var userReq proto.UserSendMessageReq
+	err = json.Unmarshal([]byte(msg.Data), &userReq)
+	if err != nil {
+		fmt.Println("unmarshal failed, err", err)
+		return
+	}
+
+	users := clientMgr.GetAllUsers()
+	for id, client := range users {
+		if id == userReq.UserId {
+			continue
+		}
+		client.SendMessageToUser(userReq.UserId, userReq.Data)
+	}
+	return
+}
+
+func (p *Client) SendMessageToUser(userId int, text string) {
+	var respMsg proto.Message
+	respMsg.Cmd = proto.UserRecvMessageCmd
+
+	var recvMsg proto.UserRecvMessageReq
+	recvMsg.Data = text
+	recvMsg.UserId = userId
+
+	data, err := json.Marshal(recvMsg)
 	if err != nil {
 		fmt.Println("marshal failed ", err)
 		return

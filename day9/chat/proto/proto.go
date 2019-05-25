@@ -23,3 +23,18 @@ type LoginCmdRes struct {
 	Error string `json:"error"`
 	User  []int  `json:"users"`
 }
+
+type UserStatusNotify struct {
+	UserId int `json:"user_id"`
+	Status int `json:"user_status"`
+}
+
+type UserSendMessageReq struct {
+	UserId int    `json:"user_id"`
+	Data   string `json:"data"`
+}
+
+type UserRecvMessageReq struct {
+	Data   string `json:"data"`
+	UserId int    `json:"user_id"`
+}
