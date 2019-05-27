@@ -15,7 +15,7 @@ func main() {
 	msg.Topic = "test"
 	msg.Value = sarama.StringEncoder("this is a good test, my message is good")
 
-	client, err := sarama.NewSyncProducer([]string{"127.0.0.1:9092"}, config)
+	client, err := sarama.NewSyncProducer([]string{"172.18.0.2:9092"}, config)
 	if err != nil {
 		fmt.Println("producer close, err:", err)
 		return
