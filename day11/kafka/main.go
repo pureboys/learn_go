@@ -12,10 +12,10 @@ func main() {
 	config.Producer.Return.Successes = true
 
 	msg := &sarama.ProducerMessage{}
-	msg.Topic = "test"
+	msg.Topic = "test1"
 	msg.Value = sarama.StringEncoder("this is a good test, my message is good")
 
-	client, err := sarama.NewSyncProducer([]string{"172.18.0.2:9092"}, config)
+	client, err := sarama.NewSyncProducer([]string{"localhost:9092"}, config)
 	if err != nil {
 		fmt.Println("producer close, err:", err)
 		return
