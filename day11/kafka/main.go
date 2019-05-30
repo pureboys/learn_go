@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Shopify/sarama"
+	"time"
 )
 
 func main() {
@@ -23,12 +24,15 @@ func main() {
 
 	defer client.Close()
 
-	pid, offset, err := client.SendMessage(msg)
-	if err != nil {
-		fmt.Println("send message failed, ", err)
-		return
+	for {
+		pid, offset, err := client.SendMessage(msg)
+		if err != nil {
+			fmt.Println("send message failed, ", err)
+			return
+		}
+
+		fmt.Printf("pid: %v offset: %v\n", pid, offset)
+
+		time.Sleep(time.Millisecond * 10)
 	}
-
-	fmt.Printf("pid: %v offset: %v\n", pid, offset)
-
 }
