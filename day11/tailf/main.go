@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	filename := "./my.log"
+	filename := "/home/oliver/go/src/demo/day11/tailf/my.log"
 	tails, err := tail.TailFile(filename, tail.Config{
-		ReOpen:    true,
-		Follow:    true,
-		Location:  &tail.SeekInfo{Offset: 0, Whence: 2},
+		ReOpen: true,
+		Follow: true,
+		//Location:  &tail.SeekInfo{Offset: 0, Whence: 2},
 		MustExist: false,
 		Poll:      true,
 	})
