@@ -47,7 +47,7 @@ func InitTail(conf []CollectConf, chanSize int) (err error) {
 			conf: v,
 		}
 
-		tails, err := tail.TailFile(v.LogPath, tail.Config{
+		tails, errTail := tail.TailFile(v.LogPath, tail.Config{
 			ReOpen: true,
 			Follow: true,
 			//Location:  &tail.SeekInfo{Offset: 0, Whence: 2},
@@ -55,7 +55,8 @@ func InitTail(conf []CollectConf, chanSize int) (err error) {
 			Poll:      true,
 		})
 
-		if err != nil {
+		if errTail != nil {
+			err = errTail
 			return
 		}
 
