@@ -31,6 +31,8 @@ func main() {
 		return
 	}
 
+	logs.Debug("initialize tailf success")
+
 	err = kafka.InitKafka(appConfig.kafkaAddr)
 	if err != nil {
 		logs.Error("init kafka failed, err: %v", err)

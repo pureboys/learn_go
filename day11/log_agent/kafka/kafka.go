@@ -25,8 +25,6 @@ func InitKafka(addr string) (err error) {
 		return
 	}
 
-	defer client.Close()
-
 	logs.Debug("init kafka success")
 	return
 }
@@ -43,7 +41,7 @@ func SendToKafka(data, topic string) (err error) {
 		return
 	}
 
-	logs.Debug("pid: %v offset: %v, topic: %v \n", pid, offset, topic)
+	logs.Debug("pid: %v offset: %v, topic: %v", pid, offset, topic)
 
 	return
 }
