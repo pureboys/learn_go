@@ -12,9 +12,10 @@ var (
 )
 
 type Config struct {
-	logLevel string
-	logPath  string
-	chanSize int
+	logLevel  string
+	logPath   string
+	chanSize  int
+	kafkaAddr string
 
 	collectConf []tailf.CollectConf
 }
@@ -41,6 +42,12 @@ func loadConfig(confType, filename string) (err error) {
 	appConfig.chanSize, err = conf.Int("collect::chan_size")
 	if err != nil {
 		appConfig.chanSize = 100
+	}
+
+	appConfig.kafkaAddr = conf.String("kafka::server_addr")
+	if len(appConfig.kafkaAddr) == 0 {
+		err = fmt.Errorf("invalid kafka addr")
+		return
 	}
 
 	err = loadCollectConf(conf)

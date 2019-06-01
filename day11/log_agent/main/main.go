@@ -1,6 +1,7 @@
 package main
 
 import (
+	"demo/day11/log_agent/kafka"
 	"demo/day11/log_agent/tailf"
 	"fmt"
 	"github.com/astaxie/beego/logs"
@@ -27,6 +28,12 @@ func main() {
 	err = tailf.InitTail(appConfig.collectConf, appConfig.chanSize)
 	if err != nil {
 		logs.Error("init tail failed, err: %v", err)
+		return
+	}
+
+	err = kafka.InitKafka(appConfig.kafkaAddr)
+	if err != nil {
+		logs.Error("init kafka failed, err: %v", err)
 		return
 	}
 

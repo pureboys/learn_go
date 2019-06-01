@@ -87,3 +87,8 @@ func readFromTail(tailObj *TailObj) {
 		tailObjMgr.msgChan <- textMsg
 	}
 }
+
+func GetOneLine() (msg *TextMsg) {
+	msg = <-tailObjMgr.msgChan
+	return
+}
