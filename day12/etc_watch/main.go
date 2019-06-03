@@ -21,6 +21,8 @@ func main() {
 	fmt.Println("connect success")
 	defer cli.Close()
 
+	_, _ = cli.Put(context.Background(), "/logagent/conf/", "abcde")
+
 	rch := cli.Watch(context.Background(), "/logagent/conf/")
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
