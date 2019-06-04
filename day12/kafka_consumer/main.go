@@ -45,6 +45,7 @@ func main() {
 	}
 
 	//time.Sleep(time.Hour)
+	fmt.Println("wait....")
 	wg.Wait()
 	_ = consumer.Close()
 	fmt.Println("over...")
