@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"demo/day11/log_agent/tailf"
+	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	"go.etcd.io/etcd/clientv3"
@@ -17,7 +19,7 @@ var (
 	etcdClient *EtcdClient
 )
 
-func initEtcd(addr string, key string) (err error) {
+func initEtcd(addr string, key string) (collectConf []tailf.CollectConf, err error) {
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   []string{"localhost:2379", "localhost:22379", "localhost:32379"},
 		DialTimeout: 5 * time.Second,
@@ -47,8 +49,17 @@ func initEtcd(addr string, key string) (err error) {
 		cancel()
 		logs.Debug("resp from etcd:%v", response.Kvs)
 
-		for key, value := range response.Kvs {
-			fmt.Println(key, value)
+		for _, value := range response.Kvs {
+			if string(value.Key) == etcdKey {
+				err := json.Unmarshal(value.Value, &collectConf)
+				if err != nil {
+					logs.Error("unmarshal failed, err:%v", err)
+					continue
+				}
+
+				logs.Debug("log config is %v", collectConf)
+
+			}
 		}
 
 	}

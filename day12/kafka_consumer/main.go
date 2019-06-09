@@ -19,7 +19,7 @@ func main() {
 		return
 	}
 
-	partitionList, err := consumer.Partitions("test1")
+	partitionList, err := consumer.Partitions("nginx_topic")
 	if err != nil {
 		fmt.Println("failed to get the list of partitions:", err)
 		return
@@ -27,7 +27,7 @@ func main() {
 	fmt.Println(partitionList)
 
 	for partition := range partitionList {
-		pc, err := consumer.ConsumePartition("test1", int32(partition), sarama.OffsetNewest)
+		pc, err := consumer.ConsumePartition("nginx_topic", int32(partition), sarama.OffsetNewest)
 		if err != nil {
 			fmt.Printf("failed to start consumer for partition %d: %s\n", partition, err)
 			return

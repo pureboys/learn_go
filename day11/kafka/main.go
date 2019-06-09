@@ -13,7 +13,7 @@ func main() {
 	config.Producer.Return.Successes = true
 
 	msg := &sarama.ProducerMessage{}
-	msg.Topic = "test1"
+	msg.Topic = "nginx_topic"
 	msg.Value = sarama.StringEncoder("this is a good test, my message is good")
 
 	client, err := sarama.NewSyncProducer([]string{"localhost:9092"}, config)

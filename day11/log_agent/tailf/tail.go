@@ -8,8 +8,8 @@ import (
 )
 
 type CollectConf struct {
-	LogPath string
-	Topic   string
+	LogPath string `json:"log_path"`
+	Topic   string `json:"topic"`
 }
 
 type TailObj struct {

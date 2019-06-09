@@ -25,7 +25,15 @@ func main() {
 
 	logs.Debug("load conf success, config: %v", appConfig)
 
-	err = tailf.InitTail(appConfig.collectConf, appConfig.chanSize)
+	collectConf, err := initEtcd(appConfig.etcdAddr, appConfig.etcdKey)
+	if err != nil {
+		logs.Error("init etcd failed, err: %v", err)
+		return
+	}
+	logs.Debug("initialize etcd success")
+
+	err = tailf.InitTail(collectConf, appConfig.chanSize)
+	//err = tailf.InitTail(appConfig.collectConf, appConfig.chanSize)
 	if err != nil {
 		logs.Error("init tail failed, err: %v", err)
 		return
@@ -36,12 +44,6 @@ func main() {
 	err = kafka.InitKafka(appConfig.kafkaAddr)
 	if err != nil {
 		logs.Error("init kafka failed, err: %v", err)
-		return
-	}
-
-	err = initEtcd(appConfig.etcdAddr, appConfig.etcdKey)
-	if err != nil {
-		logs.Error("init etcd failed, err: %v", err)
 		return
 	}
 
