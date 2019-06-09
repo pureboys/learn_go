@@ -39,7 +39,7 @@ func SetLogConfEtcd() {
 	})
 
 	logConfArr = append(logConfArr, tailf.CollectConf{
-		LogPath: "/home/oliver/go/src/demo/day11/log_agent/logs/error.log",
+		LogPath: "/home/oliver/go/src/demo/day11/log_agent/logs/error2.log",
 		Topic:   "nginx_error_topic",
 	})
 

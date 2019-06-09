@@ -1,7 +1,6 @@
 package tailf
 
 import (
-	"fmt"
 	"github.com/astaxie/beego/logs"
 	"github.com/hpcloud/tail"
 	"time"
@@ -33,13 +32,13 @@ var (
 
 func InitTail(conf []CollectConf, chanSize int) (err error) {
 
-	if len(conf) == 0 {
-		err = fmt.Errorf("invalid config for log collect, conf:%v", conf)
-		return
-	}
-
 	tailObjMgr = &TailObjMgr{
 		msgChan: make(chan *TextMsg, chanSize),
+	}
+
+	if len(conf) == 0 {
+		logs.Error("invalid config for log collect, conf:%v", conf)
+		return
 	}
 
 	for _, v := range conf {
@@ -56,8 +55,8 @@ func InitTail(conf []CollectConf, chanSize int) (err error) {
 		})
 
 		if errTail != nil {
-			err = errTail
-			return
+			logs.Error("init tail file failed, conf:%v, err:%v", conf, errTail)
+			continue
 		}
 
 		obj.tail = tails
@@ -91,4 +90,48 @@ func readFromTail(tailObj *TailObj) {
 func GetOneLine() (msg *TextMsg) {
 	msg = <-tailObjMgr.msgChan
 	return
+}
+
+func UpdateConfig(conf []CollectConf) (err error) {
+	for _, oneConf := range conf {
+		var isRunning = false
+		for _, obj := range tailObjMgr.tailObjs {
+			if oneConf.LogPath == obj.conf.LogPath {
+				isRunning = true
+				break
+			}
+		}
+
+		if isRunning {
+			continue
+		}
+
+		createNewTask(oneConf)
+	}
+	return
+}
+
+func createNewTask(conf CollectConf) {
+	obj := &TailObj{
+		conf: conf,
+	}
+
+	tails, errTail := tail.TailFile(conf.LogPath, tail.Config{
+		ReOpen: true,
+		Follow: true,
+		//Location:  &tail.SeekInfo{Offset: 0, Whence: 2},
+		MustExist: false,
+		Poll:      true,
+	})
+
+	if errTail != nil {
+		logs.Error("collect filename[%s] failed, err:%v", conf.LogPath, errTail)
+		return
+	}
+
+	obj.tail = tails
+
+	tailObjMgr.tailObjs = append(tailObjMgr.tailObjs, obj)
+
+	go readFromTail(obj)
 }
