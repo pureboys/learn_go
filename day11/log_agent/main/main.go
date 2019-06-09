@@ -39,6 +39,12 @@ func main() {
 		return
 	}
 
+	err = initEtcd(appConfig.etcdAddr, appConfig.etcdKey)
+	if err != nil {
+		logs.Error("init etcd failed, err: %v", err)
+		return
+	}
+
 	logs.Debug("initialize all success")
 	err = serverRun()
 	if err != nil {

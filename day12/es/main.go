@@ -12,7 +12,7 @@ type Tweet struct {
 }
 
 func main() {
-	client, err := elastic.NewClient(elastic.SetSniff(false), elastic.SetURL("localhost:9200"))
+	client, err := elastic.NewClient(elastic.SetSniff(false), elastic.SetURL("http://localhost:9200"))
 	if err != nil {
 		fmt.Println("connect es error", err)
 		return
