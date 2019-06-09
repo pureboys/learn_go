@@ -3,7 +3,13 @@ package tailf
 import (
 	"github.com/astaxie/beego/logs"
 	"github.com/hpcloud/tail"
+	"sync"
 	"time"
+)
+
+const (
+	StatusNormal = 1
+	StatusDelete = 2
 )
 
 type CollectConf struct {
@@ -12,13 +18,16 @@ type CollectConf struct {
 }
 
 type TailObj struct {
-	tail *tail.Tail
-	conf CollectConf
+	tail     *tail.Tail
+	conf     CollectConf
+	status   int
+	exitChan chan int
 }
 
 type TailObjMgr struct {
 	tailObjs []*TailObj
 	msgChan  chan *TextMsg
+	lock     sync.Mutex
 }
 
 type TextMsg struct {
@@ -42,28 +51,7 @@ func InitTail(conf []CollectConf, chanSize int) (err error) {
 	}
 
 	for _, v := range conf {
-		obj := &TailObj{
-			conf: v,
-		}
-
-		tails, errTail := tail.TailFile(v.LogPath, tail.Config{
-			ReOpen: true,
-			Follow: true,
-			//Location:  &tail.SeekInfo{Offset: 0, Whence: 2},
-			MustExist: false,
-			Poll:      true,
-		})
-
-		if errTail != nil {
-			logs.Error("init tail file failed, conf:%v, err:%v", conf, errTail)
-			continue
-		}
-
-		obj.tail = tails
-
-		tailObjMgr.tailObjs = append(tailObjMgr.tailObjs, obj)
-
-		go readFromTail(obj)
+		createNewTask(v)
 	}
 
 	return
@@ -71,19 +59,25 @@ func InitTail(conf []CollectConf, chanSize int) (err error) {
 
 func readFromTail(tailObj *TailObj) {
 	for {
-		line, ok := <-tailObj.tail.Lines
-		if !ok {
-			logs.Warn("tail file close reopen, filename: %s\n", tailObj.tail.Filename)
-			time.Sleep(time.Millisecond * 100)
-			continue
+		select {
+		case line, ok := <-tailObj.tail.Lines:
+			if !ok {
+				logs.Warn("tail file close reopen, filename: %s\n", tailObj.tail.Filename)
+				time.Sleep(time.Millisecond * 100)
+				continue
+			}
+			textMsg := &TextMsg{
+				Msg:   line.Text,
+				Topic: tailObj.conf.Topic,
+			}
+
+			tailObjMgr.msgChan <- textMsg
+
+		case <-tailObj.exitChan:
+			logs.Warn("tail obj will exited, conf: %v", tailObj.conf)
+			return
 		}
 
-		textMsg := &TextMsg{
-			Msg:   line.Text,
-			Topic: tailObj.conf.Topic,
-		}
-
-		tailObjMgr.msgChan <- textMsg
 	}
 }
 
@@ -93,6 +87,11 @@ func GetOneLine() (msg *TextMsg) {
 }
 
 func UpdateConfig(conf []CollectConf) (err error) {
+	// 并发加锁
+	tailObjMgr.lock.Lock()
+	defer tailObjMgr.lock.Unlock()
+
+	// 新增部分
 	for _, oneConf := range conf {
 		var isRunning = false
 		for _, obj := range tailObjMgr.tailObjs {
@@ -108,12 +107,35 @@ func UpdateConfig(conf []CollectConf) (err error) {
 
 		createNewTask(oneConf)
 	}
+
+	//删除部分
+	var tailObjs []*TailObj
+	for _, obj := range tailObjMgr.tailObjs {
+		obj.status = StatusDelete
+
+		for _, oneConf := range conf {
+			if oneConf.LogPath == obj.conf.LogPath {
+				obj.status = StatusNormal
+				break
+			}
+		}
+
+		if StatusDelete == obj.status {
+			obj.exitChan <- 1
+			continue
+		}
+
+		tailObjs = append(tailObjs, obj)
+	}
+
+	tailObjMgr.tailObjs = tailObjs
 	return
 }
 
 func createNewTask(conf CollectConf) {
 	obj := &TailObj{
-		conf: conf,
+		conf:     conf,
+		exitChan: make(chan int, 100),
 	}
 
 	tails, errTail := tail.TailFile(conf.LogPath, tail.Config{

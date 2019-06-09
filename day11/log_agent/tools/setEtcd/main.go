@@ -50,6 +50,10 @@ func SetLogConfEtcd() {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	//
+	//cli.Delete(ctx, EtcdKey)
+	//return
+
 	_, err = cli.Put(ctx, EtcdKey, string(data))
 	cancel()
 	if err != nil {

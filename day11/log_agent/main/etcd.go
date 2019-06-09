@@ -88,6 +88,9 @@ func watchKey(key string) {
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
 			if ev.Type == mvccpb.DELETE {
+				if len(collectConf) > 0 {
+					collectConf = []tailf.CollectConf{}
+				}
 				logs.Warn("key[%s] config deleted", key)
 				continue
 			}
