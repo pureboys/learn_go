@@ -1,6 +1,8 @@
 package main
 
-import "github.com/astaxie/beego/logs"
+import (
+	"github.com/astaxie/beego/logs"
+)
 
 func main() {
 
@@ -25,20 +27,20 @@ func main() {
 
 	logs.Debug("init kafka success")
 
-	/*
+	err = initES(logConfig.EsAddr)
+	if err != nil {
+		logs.Error("init es failed, err: %v", err)
+		return
+	}
 
-		err = initES()
-		if err != nil {
-			logs.Error("init es failed, err: %v", err)
-			return
-		}
+	logs.Debug("init es client success")
 
-		err = run()
-		if err != nil {
-			logs.Error("run failed, err: %v", err)
-			return
-		}
+	err = run()
+	if err != nil {
+		logs.Error("run failed, err: %v", err)
+		return
+	}
 
-		logs.Warn("warning, log_transfer is exited")
-	*/
+	logs.Warn("warning, log_transfer is exited")
+
 }

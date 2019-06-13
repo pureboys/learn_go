@@ -12,25 +12,48 @@ type LogMessage struct {
 	Message string
 }
 
-func initES() {
-	client, err := elastic.NewClient(elastic.SetSniff(false), elastic.SetURL("http://localhost:9200"))
+var (
+	esClient *elastic.Client
+)
+
+func initES(addr string) (err error) {
+	client, err := elastic.NewClient(elastic.SetSniff(false), elastic.SetURL(addr))
 	if err != nil {
 		fmt.Println("connect es error", err)
 		return
 	}
 
-	fmt.Println("conn es success")
+	esClient = client
+	return
 
-	for i := 0; i < 10000; i++ {
-		tweet := LogMessage{}
-		_, err = client.Index().Index("twitter").Type("tweet").Id(fmt.Sprintf("%d", i)).BodyJson(tweet).Do(context.Background())
+	/*
+		fmt.Println("conn es success")
 
-		if err != nil {
-			panic(err)
-			return
+		for i := 0; i < 10000; i++ {
+			tweet := LogMessage{}
+			_, err = client.Index().Index("twitter").Type("tweet").Id(fmt.Sprintf("%d", i)).BodyJson(tweet).Do(context.Background())
+
+			if err != nil {
+				panic(err)
+				return
+			}
 		}
+
+		fmt.Println("insert success")
+	*/
+}
+
+func sendToEs(topic string, data []byte) (err error) {
+	msg := &LogMessage{}
+	msg.Topic = topic
+	msg.Message = string(data)
+
+	_, err = esClient.Index().Index(topic).Type(topic).BodyJson(msg).Do(context.Background())
+
+	if err != nil {
+		panic(err)
+		return
 	}
 
-	fmt.Println("insert success")
-
+	return
 }
