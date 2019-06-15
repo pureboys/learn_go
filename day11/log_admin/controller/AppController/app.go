@@ -7,6 +7,8 @@ type AppController struct {
 }
 
 func (p *AppController) Index() {
+
+	p.Layout = "layout/layout.html"
 	p.TplName = "app/index.html"
 
 }
