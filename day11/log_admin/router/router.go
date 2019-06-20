@@ -14,4 +14,5 @@ func init() {
 
 	beego.Router("/log/apply", &LogController.LogController{}, "*:LogApply")
 	beego.Router("/log/list", &LogController.LogController{}, "*:LogList")
+	beego.Router("/log/create", &LogController.LogController{}, "*:LogCreate")
 }
