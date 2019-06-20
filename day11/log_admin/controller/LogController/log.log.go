@@ -24,7 +24,7 @@ func (p *LogController) LogList() {
 		return
 	}
 
-	p.Data["logList"] = logList
+	p.Data["loglist"] = logList
 
 	p.TplName = "log/index.html"
 }
