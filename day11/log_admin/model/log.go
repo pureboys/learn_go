@@ -107,6 +107,6 @@ func SetLogConfToEtcd(etcdKey string, info *LogInfo) (err error) {
 		return
 	}
 
-	logs.Debug("put etcd succ, data:%v", string(data))
+	logs.Debug("put etcd succ,key:%v data:%v", etcdKey, string(data))
 	return
 }

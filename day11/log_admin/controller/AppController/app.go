@@ -16,7 +16,6 @@ type AppController struct {
 func (p *AppController) AppList() {
 
 	log.Debug("enter index controller")
-	p.Layout = "layout/layout.html"
 
 	appList, err := model.GetAllAppInfo()
 	if err != nil {
@@ -27,6 +26,8 @@ func (p *AppController) AppList() {
 	}
 
 	log.Debug("app get list sucess, data: %v", appList)
+
+	p.Layout = "layout/layout.html"
 	p.Data["applist"] = appList
 
 	p.TplName = "app/index.html"
@@ -39,7 +40,6 @@ func (p *AppController) AppCreate() {
 	developPath := p.GetString("develop_path")
 	ipStr := p.GetString("iplist")
 
-	p.Layout = "layout/layout.html"
 	if len(appName) == 0 || len(appType) == 0 || len(developPath) == 0 || len(ipStr) == 0 {
 		p.Data["Error"] = fmt.Sprintf("非法参数")
 		p.TplName = "app/error.html"
@@ -61,5 +61,12 @@ func (p *AppController) AppCreate() {
 		return
 	}
 
+	p.Layout = "layout/layout.html"
 	p.Redirect("/app/list", 302)
+}
+
+func (p *AppController) AppApply() {
+	logs.Debug("enter index controller")
+	p.Layout = "layout/layout.html"
+	p.TplName = "app/apply.html"
 }

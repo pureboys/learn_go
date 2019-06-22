@@ -5,6 +5,7 @@ import (
 	_ "demo/day11/log_admin/router"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"go.etcd.io/etcd/clientv3"
 	"time"
@@ -42,7 +43,7 @@ func initEtcd() (err error) {
 }
 
 func initDb() (err error) {
-	database, err := sqlx.Open("mysql", "root:root@tcp(127.0.0.1:3306)/logadmin")
+	database, err := sqlx.Open("mysql", "root:@tcp(127.0.0.1:3306)/logadmin")
 	if err != nil {
 		logs.Warn("open mysql failed", err)
 		return

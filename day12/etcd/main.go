@@ -21,16 +21,16 @@ func main() {
 	fmt.Println("connect success")
 	defer cli.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	_, err = cli.Put(ctx, "/logagent/conf/", "sample_value")
-	cancel()
-	if err != nil {
-		fmt.Println("put failed, err:", err)
-		return
-	}
+	//ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	//_, err = cli.Put(ctx, "/logagent/conf/", "sample_value")
+	//cancel()
+	//if err != nil {
+	//	fmt.Println("put failed, err:", err)
+	//	return
+	//}
 
-	ctx, cancel = context.WithTimeout(context.Background(), time.Second)
-	resp, err := cli.Get(ctx, "/logagent/conf/")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	resp, err := cli.Get(ctx, "/oliver/backend/logagent/config/10.0.0.8")
 	cancel()
 
 	if err != nil {

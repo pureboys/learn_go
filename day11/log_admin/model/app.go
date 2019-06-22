@@ -86,8 +86,9 @@ func CreateApp(info *AppInfo) (err error) {
 	}
 
 	for _, ip := range info.IP {
-		_, err := conn.Exec("insert into tbl_app_id(app_id, ip) values (?,?)", id, ip)
-		if err != nil {
+		_, errors := conn.Exec("insert into tbl_app_ip(app_id, ip) values (?,?)", id, ip)
+		if errors != nil {
+			err = errors
 			logs.Warn("create app failed, conn.exec ip error: %v", err)
 			return
 		}

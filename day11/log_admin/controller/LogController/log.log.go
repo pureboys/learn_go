@@ -12,9 +12,6 @@ type LogController struct {
 }
 
 func (p *LogController) LogList() {
-
-	p.Layout = "layout/layout.html"
-
 	logList, err := model.GetAllLogInfo()
 	if err != nil {
 		p.Data["Error"] = fmt.Sprintf("服务器繁忙")
@@ -26,6 +23,7 @@ func (p *LogController) LogList() {
 
 	p.Data["loglist"] = logList
 
+	p.Layout = "layout/layout.html"
 	p.TplName = "log/index.html"
 }
 
@@ -42,7 +40,6 @@ func (p *LogController) LogCreate() {
 	logPath := p.GetString("log_path")
 	topic := p.GetString("topic")
 
-	p.Layout = "layout/layout.html"
 	if len(appName) == 0 || len(logPath) == 0 || len(topic) == 0 {
 		p.Data["Error"] = fmt.Sprintf("非法参数")
 		p.TplName = "log/error.html"
@@ -84,5 +81,7 @@ func (p *LogController) LogCreate() {
 			continue
 		}
 	}
+
+	p.Layout = "layout/layout.html"
 	p.Redirect("/log/list", 302)
 }

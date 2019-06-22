@@ -1,0 +1,33 @@
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+
+            <th>日志ID</th>
+            <th>项目名称</th>
+            <th>日志收集路径</th>
+            <th>创建时间</th>
+            <th>Topic</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {{range .loglist}}
+            <tr>
+                <td>
+                    {{.LogId}}
+                </td>
+                <td>{{.AppName}}</td>
+                <td>
+                    {{.LogPath}}
+                </td>
+                <td>{{.CreateTime}}</td>
+                <td>
+                    {{.Topic}}
+                </td>
+            </tr>
+        {{end}}
+
+        </tbody>
+    </table>
+</div>
