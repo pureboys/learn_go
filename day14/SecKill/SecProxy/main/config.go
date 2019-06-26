@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	"strings"
 )
 
 var (
@@ -18,19 +19,21 @@ type RedisConf struct {
 }
 
 type EtcdConf struct {
-	etcdAddr   string
-	timeout    int
-	etcdSecKey string
+	etcdAddr          string
+	timeout           int
+	etcdSecKeyPrefix  string
+	etcdSecProductKey string
 }
 
 type SecSkillConf struct {
-	redisConf RedisConf
-	etcdConf  EtcdConf
-	logPath   string
-	logLevel  string
+	redisConf      RedisConf
+	etcdConf       EtcdConf
+	logPath        string
+	logLevel       string
+	SecProductInfo []SecProductInfoConf
 }
 
-type SecInfoConf struct {
+type SecProductInfoConf struct {
 	ProductId int
 	StartTime int
 	EndTime   int
@@ -79,9 +82,15 @@ func initConfig() (err error) {
 		return
 	}
 
-	secKillConf.etcdConf.etcdSecKey = beego.AppConfig.String("etcd_sec_key")
-	if len(secKillConf.etcdConf.etcdSecKey) == 0 {
+	secKillConf.etcdConf.etcdSecKeyPrefix = beego.AppConfig.String("etcd_sec_key_prefix")
+	if len(secKillConf.etcdConf.etcdSecKeyPrefix) == 0 {
 		err = fmt.Errorf("init config failed, read etcd_sec_key error: %v", err)
+		return
+	}
+
+	productKey := beego.AppConfig.String("etcd_product_key")
+	if len(productKey) == 0 {
+		err = fmt.Errorf("init config failed, read etcd_product_key error: %v", err)
 		return
 	}
 
@@ -90,6 +99,10 @@ func initConfig() (err error) {
 	secKillConf.redisConf.redisIdleTimeout = redisIdleTimeout
 
 	secKillConf.etcdConf.timeout = etcdTimeout
+	if strings.HasSuffix(secKillConf.etcdConf.etcdSecKeyPrefix, "/") == false {
+		secKillConf.etcdConf.etcdSecKeyPrefix = secKillConf.etcdConf.etcdSecKeyPrefix + "/"
+	}
+	secKillConf.etcdConf.etcdSecProductKey = fmt.Sprintf("%s/%s", secKillConf.etcdConf.etcdSecKeyPrefix, productKey)
 
 	return
 }

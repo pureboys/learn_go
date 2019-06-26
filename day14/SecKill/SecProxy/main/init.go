@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/astaxie/beego/logs"
 	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/gomodule/redigo/redis"
 	"time"
 )
@@ -36,26 +36,85 @@ func initSec() (err error) {
 
 	err = loadSecConf()
 	if err != nil {
+		logs.Error("init loadSecConf failed, err: %v", err)
 		return
 	}
+
+	initSecProductWatcher()
 
 	logs.Info("init sec success")
 	return
 }
 
+func initSecProductWatcher() {
+	go watchSecProductKey(secKillConf.etcdConf.etcdSecProductKey)
+}
+
+func watchSecProductKey(key string) {
+
+	rch := etcdClient.Watch(context.Background(), key)
+	var secProductInfo []SecProductInfoConf
+	var getConfSuccess = true
+
+	for wresp := range rch {
+		for _, ev := range wresp.Events {
+			if ev.Type == mvccpb.DELETE {
+				if len(secProductInfo) > 0 {
+					secProductInfo = []SecProductInfoConf{}
+				}
+				logs.Warn("key[%s] config deleted", key)
+				continue
+			}
+
+			if ev.Type == mvccpb.PUT && string(ev.Kv.Key) == key {
+				err := json.Unmarshal(ev.Kv.Value, &secProductInfo)
+				if err != nil {
+					logs.Error("key[%s], unmarshal[%s] err: %v", ev.Kv.Key, ev.Kv.Value, err)
+					getConfSuccess = false
+					continue
+				}
+			}
+
+			logs.Debug("%s %q: %q\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
+		}
+
+		if getConfSuccess {
+			logs.Debug("get config from etcd success, %v", secProductInfo)
+			updateSecProductInfo(secProductInfo)
+		}
+
+	}
+}
+
+func updateSecProductInfo(secProductInfo []SecProductInfoConf) {
+
+}
+
 // 读取etcd中的货物参数
 func loadSecConf() (err error) {
-	key := fmt.Sprintf("%s/product", secKillConf.etcdConf.etcdSecKey)
-	response, err := etcdClient.Get(context.Background(), key)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(secKillConf.etcdConf.timeout)*time.Second)
+	response, err := etcdClient.Get(ctx, secKillConf.etcdConf.etcdSecProductKey)
+	cancel()
 	if err != nil {
-		logs.Error("get [%s] from etcd failed , err: %v", key, err)
+		logs.Error("get [%s] from etcd failed , err: %v", secKillConf.etcdConf.etcdSecProductKey, err)
 		return
 	}
 
+	var secProductInfo []SecProductInfoConf
+
 	for key, value := range response.Kvs {
 		logs.Debug("key[%s] value[%v]", key, value)
+		err2 := json.Unmarshal(value.Value, &secProductInfo)
+		if err2 != nil {
+			err = err2
+			logs.Error("unmarshal sec product info failed, err: %v", err)
+			return
+		}
+
+		logs.Debug("sec info conf is [%v]", secProductInfo)
 	}
 
+	secKillConf.SecProductInfo = secProductInfo
 	return
 }
 
