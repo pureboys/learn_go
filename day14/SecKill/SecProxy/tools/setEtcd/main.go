@@ -51,7 +51,7 @@ func SetLogConfEtcd() {
 	})
 
 	SecInfoConfArr = append(SecInfoConfArr, SecInfoConf{
-		ProductId: 2111,
+		ProductId: 2116,
 		StartTime: 1561537530,
 		EndTime:   1561824000,
 		Status:    0,

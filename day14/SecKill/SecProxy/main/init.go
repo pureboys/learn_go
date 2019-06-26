@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"demo/day14/SecKill/SecProxy/service"
 	"encoding/json"
 	"github.com/astaxie/beego/logs"
 	"github.com/coreos/etcd/clientv3"
@@ -40,6 +41,9 @@ func initSec() (err error) {
 		return
 	}
 
+	// 初始化service
+	service.InitService(secKillConf)
+
 	initSecProductWatcher()
 
 	logs.Info("init sec success")
@@ -47,20 +51,20 @@ func initSec() (err error) {
 }
 
 func initSecProductWatcher() {
-	go watchSecProductKey(secKillConf.etcdConf.etcdSecProductKey)
+	go watchSecProductKey(secKillConf.EtcdConf.EtcdSecProductKey)
 }
 
 func watchSecProductKey(key string) {
 
 	rch := etcdClient.Watch(context.Background(), key)
-	var secProductInfo []SecProductInfoConf
+	var secProductInfo []service.SecProductInfoConf
 	var getConfSuccess = true
 
 	for wresp := range rch {
 		for _, ev := range wresp.Events {
 			if ev.Type == mvccpb.DELETE {
 				if len(secProductInfo) > 0 {
-					secProductInfo = []SecProductInfoConf{}
+					secProductInfo = []service.SecProductInfoConf{}
 				}
 				logs.Warn("key[%s] config deleted", key)
 				continue
@@ -86,21 +90,30 @@ func watchSecProductKey(key string) {
 	}
 }
 
-func updateSecProductInfo(secProductInfo []SecProductInfoConf) {
+func updateSecProductInfo(secProductInfo []service.SecProductInfoConf) {
 
+	var tmp = make(map[int]*service.SecProductInfoConf, 1024)
+	for _, value := range secProductInfo {
+		tmp[value.ProductId] = &value
+	}
+
+	// 在需要改变的地方加锁保护 这是优化点！
+	secKillConf.RwSecProductLock.Lock()
+	secKillConf.SecProductInfoMap = tmp
+	secKillConf.RwSecProductLock.Unlock()
 }
 
 // 读取etcd中的货物参数
 func loadSecConf() (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(secKillConf.etcdConf.timeout)*time.Second)
-	response, err := etcdClient.Get(ctx, secKillConf.etcdConf.etcdSecProductKey)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(secKillConf.EtcdConf.Timeout)*time.Second)
+	response, err := etcdClient.Get(ctx, secKillConf.EtcdConf.EtcdSecProductKey)
 	cancel()
 	if err != nil {
-		logs.Error("get [%s] from etcd failed , err: %v", secKillConf.etcdConf.etcdSecProductKey, err)
+		logs.Error("get [%s] from etcd failed , err: %v", secKillConf.EtcdConf.EtcdSecProductKey, err)
 		return
 	}
 
-	var secProductInfo []SecProductInfoConf
+	var secProductInfo []service.SecProductInfoConf
 
 	for key, value := range response.Kvs {
 		logs.Debug("key[%s] value[%v]", key, value)
@@ -114,14 +127,15 @@ func loadSecConf() (err error) {
 		logs.Debug("sec info conf is [%v]", secProductInfo)
 	}
 
-	secKillConf.SecProductInfo = secProductInfo
+	updateSecProductInfo(secProductInfo)
+
 	return
 }
 
 func initLogs() (err error) {
 	config := make(map[string]interface{})
-	config["filename"] = secKillConf.logPath
-	config["level"] = convertLogLevel(secKillConf.logLevel)
+	config["filename"] = secKillConf.LogPath
+	config["level"] = convertLogLevel(secKillConf.LogLevel)
 
 	configStr, err := json.Marshal(config)
 	if err != nil {
@@ -139,8 +153,8 @@ func initLogs() (err error) {
 
 func initEtcd() (err error) {
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{secKillConf.etcdConf.etcdAddr},
-		DialTimeout: time.Duration(secKillConf.etcdConf.timeout) * time.Second,
+		Endpoints:   []string{secKillConf.EtcdConf.EtcdAddr},
+		DialTimeout: time.Duration(secKillConf.EtcdConf.Timeout) * time.Second,
 	})
 
 	if err != nil {
@@ -155,11 +169,11 @@ func initEtcd() (err error) {
 func initRedis() (err error) {
 
 	redisPool = &redis.Pool{
-		MaxIdle:     secKillConf.redisConf.redisMaxIdle,
-		MaxActive:   secKillConf.redisConf.redisMaxActive,
-		IdleTimeout: time.Duration(secKillConf.redisConf.redisIdleTimeout) * time.Second,
+		MaxIdle:     secKillConf.RedisConf.RedisMaxIdle,
+		MaxActive:   secKillConf.RedisConf.RedisMaxActive,
+		IdleTimeout: time.Duration(secKillConf.RedisConf.RedisIdleTimeout) * time.Second,
 		Dial: func() (conn redis.Conn, e error) {
-			return redis.Dial("tcp", secKillConf.redisConf.redisAddr)
+			return redis.Dial("tcp", secKillConf.RedisConf.RedisAddr)
 		},
 	}
 	conn := redisPool.Get()
