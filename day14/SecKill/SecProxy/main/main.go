@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
+	_ = beego.LoadAppConfig("ini", "conf/app.ini")
+
 	err := initConfig()
 	if err != nil {
 		panic(err)

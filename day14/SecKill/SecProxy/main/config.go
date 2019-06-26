@@ -17,9 +17,26 @@ type RedisConf struct {
 	redisIdleTimeout int
 }
 
+type EtcdConf struct {
+	etcdAddr   string
+	timeout    int
+	etcdSecKey string
+}
+
 type SecSkillConf struct {
 	redisConf RedisConf
-	etcdAddr  string
+	etcdConf  EtcdConf
+	logPath   string
+	logLevel  string
+}
+
+type SecInfoConf struct {
+	ProductId int
+	StartTime int
+	EndTime   int
+	Status    int
+	Total     int
+	Left      int
 }
 
 func initConfig() (err error) {
@@ -28,8 +45,10 @@ func initConfig() (err error) {
 	logs.Debug("redis config success, redis addr: %v, ", redisAddr)
 	logs.Debug("etcd config success, etcd_ addr: %v, ", etcdAddr)
 
-	secKillConf.etcdAddr = etcdAddr
+	secKillConf.etcdConf.etcdAddr = etcdAddr
 	secKillConf.redisConf.redisAddr = redisAddr
+	secKillConf.logPath = beego.AppConfig.String("log_path")
+	secKillConf.logLevel = beego.AppConfig.String("log_level")
 
 	if len(redisAddr) == 0 || len(etcdAddr) == 0 {
 		err = fmt.Errorf("init config failed, redis[%s] or etcd[%s] config is null", redisAddr, etcdAddr)
@@ -54,9 +73,23 @@ func initConfig() (err error) {
 		return
 	}
 
+	etcdTimeout, err := beego.AppConfig.Int("etcd_timeout")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read etcd_timeout error: %v", err)
+		return
+	}
+
+	secKillConf.etcdConf.etcdSecKey = beego.AppConfig.String("etcd_sec_key")
+	if len(secKillConf.etcdConf.etcdSecKey) == 0 {
+		err = fmt.Errorf("init config failed, read etcd_sec_key error: %v", err)
+		return
+	}
+
 	secKillConf.redisConf.redisMaxIdle = redisMaxIdle
 	secKillConf.redisConf.redisMaxActive = redisMaxActive
 	secKillConf.redisConf.redisIdleTimeout = redisIdleTimeout
+
+	secKillConf.etcdConf.timeout = etcdTimeout
 
 	return
 }
