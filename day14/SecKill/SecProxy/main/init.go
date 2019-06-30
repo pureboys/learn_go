@@ -170,11 +170,11 @@ func initEtcd() (err error) {
 func initRedis() (err error) {
 
 	redisPool = &redis.Pool{
-		MaxIdle:     secKillConf.RedisConf.RedisMaxIdle,
-		MaxActive:   secKillConf.RedisConf.RedisMaxActive,
-		IdleTimeout: time.Duration(secKillConf.RedisConf.RedisIdleTimeout) * time.Second,
+		MaxIdle:     secKillConf.RedisBlackConf.RedisMaxIdle,
+		MaxActive:   secKillConf.RedisBlackConf.RedisMaxActive,
+		IdleTimeout: time.Duration(secKillConf.RedisBlackConf.RedisIdleTimeout) * time.Second,
 		Dial: func() (conn redis.Conn, e error) {
-			return redis.Dial("tcp", secKillConf.RedisConf.RedisAddr)
+			return redis.Dial("tcp", secKillConf.RedisBlackConf.RedisAddr)
 		},
 	}
 	conn := redisPool.Get()

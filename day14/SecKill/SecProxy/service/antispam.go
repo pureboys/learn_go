@@ -13,6 +13,7 @@ var (
 
 type SecLimitMgr struct {
 	UserLimitMap map[int]*SecLimit
+	IPLimitMap   map[string]*SecLimit
 	lock         sync.Mutex
 }
 
@@ -23,19 +24,34 @@ type SecLimit struct {
 
 func antiSpam(req *SecRequest) (err error) {
 	secLimitMgr.lock.Lock()
+
+	// 用户速度限制
 	secLimit, ok := secLimitMgr.UserLimitMap[req.UserId]
 	if !ok {
 		secLimit = &SecLimit{}
 		secLimitMgr.UserLimitMap[req.UserId] = secLimit
 	}
-
 	count := secLimit.Count(req.AccessTime.Unix())
+
+	// ip速度限制
+	ipLimit, ok := secLimitMgr.IPLimitMap[req.ClientAddr]
+	if !ok {
+		ipLimit = &SecLimit{}
+		secLimitMgr.IPLimitMap[req.ClientAddr] = ipLimit
+	}
+	count2 := secLimit.Count(req.AccessTime.Unix())
 
 	secLimitMgr.lock.Unlock()
 
-	// 超过限制则进行限流
+	// 用户超过限制则进行限流
 	if count > secKillConf.UserSecAccessLimit {
-		err = fmt.Errorf("invalid requeset")
+		err = fmt.Errorf("UserSecAccessLimit invalid requeset")
+		return
+	}
+
+	// IP超过限制则进行限流
+	if count2 > secKillConf.IPSecAccessLimit {
+		err = fmt.Errorf("IPSecAccessLimit invalid requeset")
 		return
 	}
 

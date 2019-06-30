@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/gomodule/redigo/redis"
 	"sync"
 	"time"
 )
@@ -26,7 +27,7 @@ type EtcdConf struct {
 }
 
 type SecSkillConf struct {
-	RedisConf          RedisConf
+	RedisBlackConf     RedisConf
 	EtcdConf           EtcdConf
 	LogPath            string
 	LogLevel           string
@@ -34,6 +35,11 @@ type SecSkillConf struct {
 	RwSecProductLock   sync.RWMutex
 	CookieSecretKey    string
 	UserSecAccessLimit int
+	IPSecAccessLimit   int
+	ReferWhiteList     []string
+	ipBlackMap         map[string]bool
+	idBlackMap         map[int]bool
+	blackRedisPool     *redis.Pool
 }
 
 type SecProductInfoConf struct {
@@ -46,12 +52,14 @@ type SecProductInfoConf struct {
 }
 
 type SecRequest struct {
-	ProductId    int
-	Source       string
-	AuthCode     string
-	SecTime      string
-	Nance        string
-	UserId       int
-	UserAuthSign string
-	AccessTime   time.Time
+	ProductId     int
+	Source        string
+	AuthCode      string
+	SecTime       string
+	Nance         string
+	UserId        int
+	UserAuthSign  string
+	AccessTime    time.Time
+	ClientAddr    string
+	ClientReferer string
 }

@@ -2,9 +2,11 @@ package controller
 
 import (
 	"demo/day14/SecKill/SecProxy/service"
+	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -44,12 +46,16 @@ func (p *SkillController) SecKill() {
 	secRequest.UserAuthSign = p.Ctx.GetCookie("userAuthSign")
 	secRequest.UserId, err = strconv.Atoi(p.Ctx.GetCookie("userId"))
 	secRequest.AccessTime = time.Now()
+	if len(p.Ctx.Request.RemoteAddr) > 0 {
+		secRequest.ClientAddr = strings.Split(p.Ctx.Request.RemoteAddr, ":")[0]
+	}
+	secRequest.ClientReferer = p.Ctx.Request.Referer()
 
-	//if err != nil {
-	//	result["code"] = service.ErrInvalidRequest
-	//	result["message"] = fmt.Sprintf("invalid cookie: userId")
-	//	return
-	//}
+	if err != nil {
+		result["code"] = service.ErrInvalidRequest
+		result["message"] = fmt.Sprintf("invalid cookie: userId")
+		return
+	}
 
 	data, code, err := service.SecKill(secRequest)
 	if err != nil {
