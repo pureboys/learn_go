@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crypto/md5"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	"time"
@@ -85,6 +86,40 @@ func SecInfoList() (data []map[string]interface{}, code int, err error) {
 		}
 
 		data = append(data, item)
+	}
+
+	return
+}
+
+func userCheck(req *SecRequest) (err error) {
+
+	authData := fmt.Sprintf("%d:%s", req.UserId, secKillConf.CookieSecretKey)
+	authSign := fmt.Sprintf("%x", md5.Sum([]byte(authData)))
+
+	if authSign != req.UserAuthSign {
+		err = fmt.Errorf("invalid user cookie auth")
+		return
+	}
+
+	return
+}
+
+func SecKill(req *SecRequest) (data map[string]interface{}, code int, err error) {
+	secKillConf.RwSecProductLock.RLock()
+	defer secKillConf.RwSecProductLock.RUnlock()
+
+	//err = userCheck(req)
+	//if err != nil {
+	//	code = ErrUserCheckAuthFailed
+	//	logs.Warn("userId[%d] invalid, check failed, req[%v]", req.UserId, req)
+	//	return
+	//}
+
+	err = antiSpam(req)
+	if err != nil {
+		code = ErrUserServiceBusy
+		logs.Warn("userId[%d] invalid, check failed, req[%v]", req.UserId, req)
+		return
 	}
 
 	return
