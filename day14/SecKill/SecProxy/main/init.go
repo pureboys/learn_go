@@ -94,7 +94,8 @@ func updateSecProductInfo(secProductInfo []service.SecProductInfoConf) {
 
 	var tmp = make(map[int]*service.SecProductInfoConf, 1024)
 	for _, value := range secProductInfo {
-		tmp[value.ProductId] = &value
+		productInfo := value
+		tmp[value.ProductId] = &productInfo
 	}
 
 	// 在需要改变的地方加锁保护 这是优化点！
