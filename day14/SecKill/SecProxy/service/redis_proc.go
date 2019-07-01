@@ -35,7 +35,7 @@ func ReadHandle() {
 	for {
 
 		conn := secKillConf.proxy2LayerRedisPool.Get()
-		reply, err := conn.Do("RPOP", "recv_queue")
+		reply, err := conn.Do("BRPOP", "recv_queue", 1000)
 		data, err := redis.String(reply, err)
 		if err != nil {
 			logs.Error("rpop failed, err:%v", err)
