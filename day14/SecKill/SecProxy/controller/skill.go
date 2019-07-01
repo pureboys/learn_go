@@ -37,7 +37,7 @@ func (p *SkillController) SecKill() {
 	secTime := p.GetString("time")
 	nance := p.GetString("nance")
 
-	secRequest := &service.SecRequest{}
+	secRequest := service.NewSecRequest()
 	secRequest.AuthCode = authCode
 	secRequest.Nance = nance
 	secRequest.ProductId = productId
@@ -50,6 +50,7 @@ func (p *SkillController) SecKill() {
 		secRequest.ClientAddr = strings.Split(p.Ctx.Request.RemoteAddr, ":")[0]
 	}
 	secRequest.ClientReferer = p.Ctx.Request.Referer()
+	secRequest.CloseNotify = p.Ctx.ResponseWriter.CloseNotify()
 
 	if err != nil {
 		result["code"] = service.ErrInvalidRequest

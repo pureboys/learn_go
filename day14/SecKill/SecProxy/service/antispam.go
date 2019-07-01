@@ -2,78 +2,79 @@ package service
 
 import (
 	"fmt"
+	"github.com/astaxie/beego/logs"
 	"sync"
 )
 
-var (
-	secLimitMgr = &SecLimitMgr{
-		UserLimitMap: make(map[int]*SecLimit, 10000),
-	}
-)
-
 type SecLimitMgr struct {
-	UserLimitMap map[int]*SecLimit
-	IPLimitMap   map[string]*SecLimit
+	UserLimitMap map[int]*Limit
+	IPLimitMap   map[string]*Limit
 	lock         sync.Mutex
 }
 
-type SecLimit struct {
-	count   int
-	curTime int64
-}
-
 func antiSpam(req *SecRequest) (err error) {
-	secLimitMgr.lock.Lock()
+	_, ok := secKillConf.idBlackMap[req.UserId]
+	if ok {
+		err = fmt.Errorf("invalid request")
+		logs.Error("useId[%v] is block by id black", req.UserId)
+		return
+	}
+
+	_, ok = secKillConf.ipBlackMap[req.ClientAddr]
+	if ok {
+		err = fmt.Errorf("invalid request")
+		logs.Error("useId[%v] ip[%v] is block by ip black", req.UserId, req.ClientAddr)
+		return
+	}
+
+	secKillConf.secLimitMgr.lock.Lock()
 
 	// 用户速度限制
-	secLimit, ok := secLimitMgr.UserLimitMap[req.UserId]
+	limit, ok := secKillConf.secLimitMgr.UserLimitMap[req.UserId]
 	if !ok {
-		secLimit = &SecLimit{}
-		secLimitMgr.UserLimitMap[req.UserId] = secLimit
+		limit = &Limit{
+			secLimit: &SecLimit{},
+			minLimit: &MinLimit{},
+		}
+		secKillConf.secLimitMgr.UserLimitMap[req.UserId] = limit
 	}
-	count := secLimit.Count(req.AccessTime.Unix())
+
+	secIdCount := limit.secLimit.Count(req.AccessTime.Unix())
+	minIdCount := limit.minLimit.Check(req.AccessTime.Unix())
 
 	// ip速度限制
-	ipLimit, ok := secLimitMgr.IPLimitMap[req.ClientAddr]
+	limit, ok = secKillConf.secLimitMgr.IPLimitMap[req.ClientAddr]
 	if !ok {
-		ipLimit = &SecLimit{}
-		secLimitMgr.IPLimitMap[req.ClientAddr] = ipLimit
+		limit = &Limit{
+			secLimit: &SecLimit{},
+			minLimit: &MinLimit{},
+		}
+		secKillConf.secLimitMgr.IPLimitMap[req.ClientAddr] = limit
 	}
-	count2 := secLimit.Count(req.AccessTime.Unix())
+	secIpCount := limit.secLimit.Count(req.AccessTime.Unix())
+	minIpCount := limit.minLimit.Count(req.AccessTime.Unix())
 
-	secLimitMgr.lock.Unlock()
+	secKillConf.secLimitMgr.lock.Unlock()
 
-	// 用户超过限制则进行限流
-	if count > secKillConf.UserSecAccessLimit {
+	if secIpCount > secKillConf.AccessLimitConf.IPSecAccessLimit {
 		err = fmt.Errorf("UserSecAccessLimit invalid requeset")
 		return
 	}
 
-	// IP超过限制则进行限流
-	if count2 > secKillConf.IPSecAccessLimit {
-		err = fmt.Errorf("IPSecAccessLimit invalid requeset")
+	if minIpCount > secKillConf.AccessLimitConf.IPMinAccessLimit {
+		err = fmt.Errorf("invalid request")
+		return
+	}
+
+	if secIdCount > secKillConf.AccessLimitConf.UserSecAccessLimit {
+		err = fmt.Errorf("invalid request")
+		return
+	}
+
+	if minIdCount > secKillConf.AccessLimitConf.UserMinAccessLimit {
+		err = fmt.Errorf("invalid request")
 		return
 	}
 
 	return
-}
-
-func (p *SecLimit) Count(nowTime int64) (curCount int) {
-	if p.curTime != nowTime {
-		p.count = 1
-		p.curTime = nowTime
-		curCount = p.count
-		return
-	}
-
-	p.count++
-	curCount = p.count
-	return
-}
-
-func (p *SecLimit) Check(nowTime int64) int {
-	if p.curTime != nowTime {
-		return 0
-	}
-	return p.count
 }

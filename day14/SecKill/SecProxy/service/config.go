@@ -26,20 +26,46 @@ type EtcdConf struct {
 	EtcdSecProductKey string
 }
 
-type SecSkillConf struct {
-	RedisBlackConf     RedisConf
-	EtcdConf           EtcdConf
-	LogPath            string
-	LogLevel           string
-	SecProductInfoMap  map[int]*SecProductInfoConf
-	RwSecProductLock   sync.RWMutex
-	CookieSecretKey    string
-	UserSecAccessLimit int
+type AccessLimitConf struct {
 	IPSecAccessLimit   int
-	ReferWhiteList     []string
-	ipBlackMap         map[string]bool
-	idBlackMap         map[int]bool
-	blackRedisPool     *redis.Pool
+	UserSecAccessLimit int
+	IPMinAccessLimit   int
+	UserMinAccessLimit int
+}
+
+type SecSkillConf struct {
+	RedisBlackConf       RedisConf
+	RedisProxy2LayerConf RedisConf
+	RedisLayer2ProxyConf RedisConf
+
+	EtcdConf          EtcdConf
+	LogPath           string
+	LogLevel          string
+	SecProductInfoMap map[int]*SecProductInfoConf
+	RwSecProductLock  sync.RWMutex
+	CookieSecretKey   string
+
+	ReferWhiteList []string
+
+	ipBlackMap map[string]bool
+	idBlackMap map[int]bool
+
+	AccessLimitConf      AccessLimitConf
+	blackRedisPool       *redis.Pool
+	proxy2LayerRedisPool *redis.Pool
+	layer2ProxyRedisPool *redis.Pool
+
+	secLimitMgr *SecLimitMgr
+
+	RWBlackLock                  sync.RWMutex
+	WriteProxy2LayerGoroutineNum int
+	ReadProxy2LayerGoroutineNum  int
+
+	SecReqChan     chan *SecRequest
+	SecReqChanSize int
+
+	UserConnMap     map[string]chan *SecResult
+	UserConnMapLock sync.Mutex
 }
 
 type SecProductInfoConf struct {
@@ -49,6 +75,13 @@ type SecProductInfoConf struct {
 	Status    int
 	Total     int
 	Left      int
+}
+
+type SecResult struct {
+	ProductId int
+	UserId    int
+	Code      int
+	Token     string
 }
 
 type SecRequest struct {
@@ -62,4 +95,7 @@ type SecRequest struct {
 	AccessTime    time.Time
 	ClientAddr    string
 	ClientReferer string
+	CloseNotify   <-chan bool
+
+	ResultChan chan *SecResult
 }

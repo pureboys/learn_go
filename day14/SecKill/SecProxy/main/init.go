@@ -17,7 +17,8 @@ var (
 )
 
 func initSec() (err error) {
-	err = initLogs()
+
+	err = initLogger()
 	if err != nil {
 		logs.Error("init logs failed, err: %v", err)
 		return
@@ -42,7 +43,11 @@ func initSec() (err error) {
 	}
 
 	// 初始化service
-	service.InitService(secKillConf)
+	err = service.InitService(secKillConf)
+	if err != nil {
+		logs.Error("init InitService failed, err: %v", err)
+		return
+	}
 
 	initSecProductWatcher()
 
@@ -133,7 +138,7 @@ func loadSecConf() (err error) {
 	return
 }
 
-func initLogs() (err error) {
+func initLogger() (err error) {
 	config := make(map[string]interface{})
 	config["filename"] = secKillConf.LogPath
 	config["level"] = convertLogLevel(secKillConf.LogLevel)

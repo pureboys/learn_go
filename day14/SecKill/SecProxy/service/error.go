@@ -1,8 +1,13 @@
 package service
 
 const (
-	ErrInvalidRequest      = 1001
-	ErrNotFoundProductId   = 1002
-	ErrUserCheckAuthFailed = 1003
-	ErrUserServiceBusy     = 1004
+	ErrInvalidRequest = iota + 1001
+	ErrNotFoundProductId
+	ErrUserCheckAuthFailed
+	ErrUserServiceBusy
+	ErrActiveNotStart
+	ErrActiveAlreadyEnd
+	ErrActiveSaleOut
+	ErrProcessTimeout
+	ErrClientClosed
 )

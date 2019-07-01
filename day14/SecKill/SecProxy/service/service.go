@@ -4,87 +4,20 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/astaxie/beego/logs"
-	"github.com/gomodule/redigo/redis"
-	"strconv"
 	"time"
 )
 
-var (
-	secKillConf *SecSkillConf
-)
-
-func initBlackRedis() (err error) {
-
-	secKillConf.blackRedisPool = &redis.Pool{
-		MaxIdle:     secKillConf.RedisBlackConf.RedisMaxIdle,
-		MaxActive:   secKillConf.RedisBlackConf.RedisMaxActive,
-		IdleTimeout: time.Duration(secKillConf.RedisBlackConf.RedisIdleTimeout) * time.Second,
-		Dial: func() (conn redis.Conn, e error) {
-			return redis.Dial("tcp", secKillConf.RedisBlackConf.RedisAddr)
-		},
+func NewSecRequest() (secRequest *SecRequest) {
+	secRequest = &SecRequest{
+		ResultChan: make(chan *SecResult, 1),
 	}
-	conn := secKillConf.blackRedisPool.Get()
-	defer conn.Close()
-	_, err = conn.Do("ping")
-	if err != nil {
-		logs.Error("ping redis failed")
-		return
-	}
-	return
-}
-
-func InitService(serviceConf *SecSkillConf) {
-	secKillConf = serviceConf
-	loadBlackList()
-
-	logs.Debug("init service success, conf: %v", secKillConf)
-}
-
-// 读取黑名单
-func loadBlackList() (err error) {
-	err = initBlackRedis()
-	if err != nil {
-		logs.Error("init black redis failed, err:%v", err)
-		return
-	}
-
-	conn := secKillConf.blackRedisPool.Get()
-	defer conn.Close()
-
-	// id 黑名单
-	reply, err := conn.Do("hgetall", "idblacklist")
-	idList, err := redis.Strings(reply, err)
-	if err != nil {
-		logs.Warn("hget all failed, err: %v", err)
-		return
-	}
-
-	for _, v := range idList {
-		id, err2 := strconv.Atoi(v)
-		err = err2
-		if err != nil {
-			logs.Warn("invalid user id [%v]", id)
-			continue
-		}
-		secKillConf.idBlackMap[id] = true
-	}
-
-	// ip 黑名单
-	reply, err = conn.Do("hgetall", "ipblacklist")
-	ipList, err := redis.Strings(reply, err)
-	if err != nil {
-		logs.Warn("hget all failed, err: %v", err)
-		return
-	}
-
-	for _, v := range ipList {
-		secKillConf.ipBlackMap[v] = true
-	}
-
 	return
 }
 
 func SecInfoById(productId int) (data map[string]interface{}, code int, err error) {
+
+	secKillConf.RwSecProductLock.RLock()
+	defer secKillConf.RwSecProductLock.RUnlock()
 
 	v, ok := secKillConf.SecProductInfoMap[productId]
 	if !ok {
@@ -204,5 +137,46 @@ func SecKill(req *SecRequest) (data map[string]interface{}, code int, err error)
 		return
 	}
 
-	return
+	data, code, err = SecInfoById(req.ProductId)
+	if err != nil {
+		logs.Warn("userId[%d] secInfoBy Id failed, req[%v]", req.UserId, req)
+		return
+	}
+
+	if code != 0 {
+		logs.Warn("userId[%d] secInfoByid failed, code[%d] req[%v]", req.UserId, code, req)
+		return
+	}
+
+	userKey := fmt.Sprintf("%d_%d", req.UserId, req.ProductId)
+	secKillConf.UserConnMap[userKey] = req.ResultChan
+
+	secKillConf.SecReqChan <- req
+
+	ticker := time.NewTicker(time.Second * 10)
+
+	defer func() {
+		ticker.Stop()
+		secKillConf.UserConnMapLock.Lock()
+		delete(secKillConf.UserConnMap, userKey)
+		secKillConf.UserConnMapLock.Unlock()
+	}()
+
+	select {
+	case <-ticker.C:
+		code = ErrProcessTimeout
+		err = fmt.Errorf("request timeout")
+		return
+	case <-req.CloseNotify:
+		code = ErrClientClosed
+		err = fmt.Errorf("client already close")
+		return
+	case result := <-req.ResultChan:
+		code = result.Code
+		data["product_id"] = result.ProductId
+		data["token"] = result.Token
+		data["user_id"] = result.UserId
+		return
+	}
+
 }

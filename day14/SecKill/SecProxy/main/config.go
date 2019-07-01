@@ -22,6 +22,7 @@ func initConfig() (err error) {
 
 	secKillConf.EtcdConf.EtcdAddr = etcdAddr
 	secKillConf.RedisBlackConf.RedisAddr = redisBlackAddr
+
 	secKillConf.LogPath = beego.AppConfig.String("log_path")
 	secKillConf.LogLevel = beego.AppConfig.String("log_level")
 
@@ -48,11 +49,17 @@ func initConfig() (err error) {
 		return
 	}
 
+	secKillConf.RedisBlackConf.RedisMaxIdle = redisMaxIdle
+	secKillConf.RedisBlackConf.RedisMaxActive = redisMaxActive
+	secKillConf.RedisBlackConf.RedisIdleTimeout = redisIdleTimeout
+
 	etcdTimeout, err := beego.AppConfig.Int("etcd_timeout")
 	if err != nil {
 		err = fmt.Errorf("init config failed, read etcd_timeout error: %v", err)
 		return
 	}
+
+	secKillConf.EtcdConf.Timeout = etcdTimeout
 
 	secKillConf.EtcdConf.EtcdSecKeyPrefix = beego.AppConfig.String("etcd_sec_key_prefix")
 	if len(secKillConf.EtcdConf.EtcdSecKeyPrefix) == 0 {
@@ -66,11 +73,6 @@ func initConfig() (err error) {
 		return
 	}
 
-	secKillConf.RedisBlackConf.RedisMaxIdle = redisMaxIdle
-	secKillConf.RedisBlackConf.RedisMaxActive = redisMaxActive
-	secKillConf.RedisBlackConf.RedisIdleTimeout = redisIdleTimeout
-
-	secKillConf.EtcdConf.Timeout = etcdTimeout
 	if strings.HasSuffix(secKillConf.EtcdConf.EtcdSecKeyPrefix, "/") == false {
 		secKillConf.EtcdConf.EtcdSecKeyPrefix = secKillConf.EtcdConf.EtcdSecKeyPrefix + "/"
 	}
@@ -85,7 +87,12 @@ func initConfig() (err error) {
 		err = fmt.Errorf("init config failed, read user_sec_access_limit error: %v", err)
 		return
 	}
-	secKillConf.UserSecAccessLimit = SecLimit
+	secKillConf.AccessLimitConf.UserSecAccessLimit = SecLimit
+
+	referList := beego.AppConfig.String("refer_white_list")
+	if len(referList) > 0 {
+		secKillConf.ReferWhiteList = strings.Split(referList, ",")
+	}
 
 	// ip 秒杀每秒限速
 	ipLimit, err := beego.AppConfig.Int("ip_sec_access_limit")
@@ -93,12 +100,91 @@ func initConfig() (err error) {
 		err = fmt.Errorf("init config failed, read ip_sec_access_limit error: %v", err)
 		return
 	}
-	secKillConf.IPSecAccessLimit = ipLimit
+	secKillConf.AccessLimitConf.IPSecAccessLimit = ipLimit
 
-	referList := beego.AppConfig.String("refer_white_list")
-	if len(referList) > 0 {
-		secKillConf.ReferWhiteList = strings.Split(referList, ",")
+	minIpLimit, err := beego.AppConfig.Int("ip_min_access_limit")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read ip_min_access_limit error:%v", err)
+		return
 	}
+	secKillConf.AccessLimitConf.IPMinAccessLimit = minIpLimit
+
+	redisProxy2LayerAddr := beego.AppConfig.String("redis_proxy2layer_addr")
+	secKillConf.RedisProxy2LayerConf.RedisAddr = redisProxy2LayerAddr
+
+	if len(redisProxy2LayerAddr) == 0 {
+		err = fmt.Errorf("init config failed, redis[%s]  config is null", redisProxy2LayerAddr)
+		return
+	}
+
+	redisMaxIdle, err = beego.AppConfig.Int("redis_proxy2layer_idle")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read redis_proxy2layer_idle error:%v", err)
+		return
+	}
+
+	redisMaxActive, err = beego.AppConfig.Int("redis_proxy2layer_active")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read redis_proxy2layer_active error:%v", err)
+		return
+	}
+
+	redisIdleTimeout, err = beego.AppConfig.Int("redis_proxy2layer_idle_timeout")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read redis_proxy2layer_idle_timeout error:%v", err)
+		return
+	}
+
+	secKillConf.RedisProxy2LayerConf.RedisMaxIdle = redisMaxIdle
+	secKillConf.RedisProxy2LayerConf.RedisMaxActive = redisMaxActive
+	secKillConf.RedisProxy2LayerConf.RedisIdleTimeout = redisIdleTimeout
+
+	writeGoNums, err := beego.AppConfig.Int("write_proxy2layer_goroutine_num")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read write_proxy2layer_goroutine_num error:%v", err)
+		return
+	}
+
+	secKillConf.WriteProxy2LayerGoroutineNum = writeGoNums
+
+	readGoNums, err := beego.AppConfig.Int("read_layer2proxy_goroutine_num")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read read_layer2proxy_goroutine_num error:%v", err)
+		return
+	}
+
+	secKillConf.ReadProxy2LayerGoroutineNum = readGoNums
+
+	//读取业务逻辑层到proxy的redis配置
+	redisLayer2ProxyAddr := beego.AppConfig.String("redis_layer2proxy_addr")
+	secKillConf.RedisProxy2LayerConf.RedisAddr = redisLayer2ProxyAddr
+
+	if len(redisLayer2ProxyAddr) == 0 {
+		err = fmt.Errorf("init config failed, redis[%s]  config is null", redisProxy2LayerAddr)
+		return
+	}
+
+	redisMaxIdle, err = beego.AppConfig.Int("redis_layer2proxy_idle")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read redis_layer2proxy_idle error:%v", err)
+		return
+	}
+
+	redisMaxActive, err = beego.AppConfig.Int("redis_layer2proxy_active")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read redis_layer2proxy_active error:%v", err)
+		return
+	}
+
+	redisIdleTimeout, err = beego.AppConfig.Int("redis_layer2proxy_idle_timeout")
+	if err != nil {
+		err = fmt.Errorf("init config failed, read redis_layer2proxy_idle_timeout error:%v", err)
+		return
+	}
+
+	secKillConf.RedisLayer2ProxyConf.RedisMaxIdle = redisMaxIdle
+	secKillConf.RedisLayer2ProxyConf.RedisMaxActive = redisMaxActive
+	secKillConf.RedisLayer2ProxyConf.RedisIdleTimeout = redisIdleTimeout
 
 	return
 }
