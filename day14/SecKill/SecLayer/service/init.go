@@ -20,6 +20,12 @@ func InitSecLayer(conf *SecLayerConf) (err error) {
 		return
 	}
 
+	err = loadProductFromEtcd(conf)
+	if err != nil {
+		logs.Error("init product failed, err: %v", err)
+		return
+	}
+
 	return
 }
 
