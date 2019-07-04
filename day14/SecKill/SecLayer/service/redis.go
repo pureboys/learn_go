@@ -70,7 +70,7 @@ func RunProcess() (err error) {
 
 }
 
-func HandleUser() {
+func HandleReader() {
 	for {
 		conn := secLayerContext.proxy2LayerRedisPool.Get()
 		for {
@@ -95,16 +95,74 @@ func HandleUser() {
 				logs.Warn("req[%v] is expire", req)
 				continue
 			}
+
+			timer := time.NewTicker(time.Millisecond * time.Duration(secLayerContext.secLayerConf.SendToHandleChanTimeout))
+			select {
+			case secLayerContext.Read2HandleChan <- &req:
+			case <-timer.C:
+				logs.Warn("send to handle chan timeout, req:%v", req)
+				break
+			}
+
 			secLayerContext.Read2HandleChan <- &req
 		}
 		conn.Close()
 	}
 }
 
+func HandleUser() {
+	logs.Debug("handle user running")
+	for req := range secLayerContext.Read2HandleChan {
+		logs.Debug("begin process request:%v", req)
+		res, err := HandleSecKill(req)
+		if err != nil {
+			logs.Warn("process request %v failed, err: %v", res, err)
+			res = &SecResponse{
+				Code: ErrServiceBusy,
+			}
+		}
+
+		timer := time.NewTicker(time.Millisecond * time.Duration(secLayerContext.secLayerConf.SendToWriteChanTimeout))
+		select {
+		case secLayerContext.Handle2WriteChan <- res:
+		case <-timer.C:
+			logs.Warn("send to response chan timeout, res:%v", res)
+			break
+		}
+
+	}
+	return
+}
+
+func HandleSecKill(request *SecRequest) (res *SecResponse, err error) {
+
+	return
+}
+
 func HandleWrite() {
+	logs.Debug("handle write running")
+
+	for res := range secLayerContext.Handle2WriteChan {
+		err := sendToRedis(res)
+		if err != nil {
+			logs.Error("send to redis, err: %v, res:%v", err, res)
+			continue
+		}
+	}
 
 }
 
-func HandleReader() {
-
+func sendToRedis(res *SecResponse) (err error) {
+	data, err := json.Marshal(res)
+	if err != nil {
+		logs.Error("marshal failed, err: %v", err)
+		return
+	}
+	conn := secLayerContext.layer2ProxyRedisPool.Get()
+	_, err = redis.String(conn.Do("RPUSH", "layer2proxy_queue", string(data)))
+	if err != nil {
+		logs.Warn("rpush to redis failed, err:%v", err)
+		return
+	}
+	return
 }
