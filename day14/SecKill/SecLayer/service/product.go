@@ -42,6 +42,7 @@ func updateSecProductInfo(conf *SecLayerConf, secProductInfo []SecProductInfoCon
 	var tmp = make(map[int]*SecProductInfoConf, 1024)
 	for _, value := range secProductInfo {
 		productInfo := value
+		productInfo.secLimit = &SecLimit{}
 		tmp[value.ProductId] = &productInfo
 	}
 

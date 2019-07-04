@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/astaxie/beego/logs"
 	"github.com/gomodule/redigo/redis"
+	"math/rand"
 	"time"
 )
 
@@ -134,7 +135,64 @@ func HandleUser() {
 	return
 }
 
-func HandleSecKill(request *SecRequest) (res *SecResponse, err error) {
+func HandleSecKill(req *SecRequest) (res *SecResponse, err error) {
+	secLayerContext.RwSecProductLock.RLock()
+	defer secLayerContext.RwSecProductLock.RUnlock()
+
+	res = &SecResponse{}
+	product, ok := secLayerContext.secLayerConf.SecProductInfoMap[req.ProductId]
+	if !ok {
+		logs.Error("not found product:%v", req.ProductId)
+		res.Code = ErrNotFoundProduct
+		return
+	}
+
+	if product.Status == ProductStatusSoldout {
+		res.Code = ErrSoldout
+		return
+	}
+
+	now := time.Now().Unix()
+	alreadySoldCount := product.secLimit.Check(now)
+	if alreadySoldCount >= product.SoldMaxLimit {
+		res.Code = ErrRetry
+		return
+	}
+
+	secLayerContext.HistoryMapLock.Lock()
+	userHistory, ok := secLayerContext.HistoryMap[req.UserId]
+	if !ok {
+		userHistory = &UserBuyHistory{
+			history: make(map[int]int, 16),
+		}
+
+		secLayerContext.HistoryMap[req.UserId] = userHistory
+	}
+
+	historyCount := userHistory.GetProductBuyCount(req.ProductId)
+	secLayerContext.HistoryMapLock.Unlock()
+
+	if historyCount >= product.OnePersonBuyLimit {
+		res.Code = ErrAlreadyBuy
+		return
+	}
+
+	curSoldCount := secLayerContext.productCountMgr.Count(req.ProductId)
+	if curSoldCount >= product.Total {
+		res.Code = ErrSoldout
+		product.Status = ProductStatusSoldout
+		return
+	}
+
+	curRate := rand.Float64()
+	if curRate > product.BuyRate {
+		res.Code = ErrRetry
+		return
+	}
+
+	userHistory.Add(req.ProductId, 1)
+	secLayerContext.productCountMgr.Add(req.ProductId, 1)
+	res.Code = ErrSecKillSucc
 
 	return
 }

@@ -30,6 +30,10 @@ func InitSecLayer(conf *SecLayerConf) (err error) {
 	secLayerContext.Read2HandleChan = make(chan *SecRequest, secLayerContext.secLayerConf.Read2handleChanSize)
 	secLayerContext.Handle2WriteChan = make(chan *SecResponse, secLayerContext.secLayerConf.Handle2WriteChanSize)
 
+	secLayerContext.HistoryMap = make(map[int]*UserBuyHistory, 1000000)
+
+	secLayerContext.productCountMgr = NewProductCountMgr()
+
 	return
 }
 
