@@ -74,6 +74,7 @@ func RunProcess() (err error) {
 }
 
 func HandleReader() {
+	logs.Debug("read goroutine read")
 	for {
 		conn := secLayerContext.proxy2LayerRedisPool.Get()
 		for {
