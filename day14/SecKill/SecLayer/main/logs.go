@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 )
 
@@ -32,5 +33,6 @@ func initLogger() (err error) {
 	}
 
 	_ = logs.SetLogger(logs.AdapterFile, string(configStr))
+	beego.SetLogFuncCall(true)
 	return
 }

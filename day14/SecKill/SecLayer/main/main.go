@@ -31,6 +31,8 @@ func main() {
 		panic(msg)
 	}
 
+	logs.Debug("init sec layer success")
+
 	err = service.Run()
 	if err != nil {
 		msg := fmt.Sprintf("service run return, err: %v", err)

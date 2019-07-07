@@ -10,8 +10,8 @@ import (
 
 func loadProductFromEtcd(conf *SecLayerConf) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	response, err := secLayerContext.etcdClient.Get(ctx, conf.EtcdConfig.EtcdSecProductKey)
-	cancel()
 	if err != nil {
 		logs.Error("get [%s] from etcd failed , err: %v", conf.EtcdConfig.EtcdSecProductKey, err)
 		return
