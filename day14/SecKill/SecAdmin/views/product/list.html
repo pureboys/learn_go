@@ -1,0 +1,29 @@
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+
+            <th>商品id</th>
+            <th>商品名称</th>
+            <th>库存</th>
+            <th>商品状态</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {{range .product_list}}
+        <tr>
+            <td>
+                {{.ProductId}}
+            </td>
+            <td>{{.ProductName}}</td>
+            <td>
+                {{.Total}}
+            </td>
+            <td>{{.Status}}</td>
+        </tr>
+        {{end}}
+
+        </tbody>
+    </table>
+</div>

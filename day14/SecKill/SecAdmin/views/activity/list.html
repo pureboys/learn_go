@@ -1,0 +1,33 @@
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+
+            <th>活动id</th>
+            <th>活动名称</th>
+            <th>活动商品</th>
+            <th>商品数量</th>
+            <th>活动开始时间</th>
+            <th>活动结束时间</th>
+            <th>活动状态</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {{range .activity_list}}
+            <tr>
+                <td>
+                    {{.ActivityId}}
+                </td>
+                <td>{{.ActivityName}}</td>
+                <td>{{.ProductId}}</td>
+                <td>{{.Total}}</td>
+                <td>{{.StartTimeStr}}</td>
+                <td>{{.EndTimeStr}}</td>
+                <td>{{.StatusStr}}</td>
+            </tr>
+        {{end}}
+
+        </tbody>
+    </table>
+</div>

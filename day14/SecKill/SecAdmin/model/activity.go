@@ -88,7 +88,7 @@ func (p *ActivityModel) GetActivityList() (activityList []*Activity, err error) 
 }
 
 func (p *ActivityModel) ProductValid(productId int, total int) (valid bool, err error) {
-	sql := "select id,name,status from product where id = ? "
+	sql := "select id,name,total,status from product where id = ? "
 	var productList []*Product
 	err = Db.Select(&productList, sql, productId)
 	if err != nil {
@@ -102,7 +102,7 @@ func (p *ActivityModel) ProductValid(productId int, total int) (valid bool, err 
 	}
 
 	if total > productList[0].Total {
-		err = fmt.Errorf("product[%v] 的数量非法", productId)
+		err = fmt.Errorf("product[%v] 的数量非法, total is %d, productList total is %d", productId, total, productList[0].Total)
 		return
 	}
 
@@ -205,7 +205,8 @@ func loadProductFromEtcd(key string) (secProductInfo []SecProductInfoConf, err e
 	logs.Debug("get from etcd succ, resp:%v", resp)
 	for k, v := range resp.Kvs {
 		logs.Debug("key[%v] valud[%v]", k, v)
-		err := json.Unmarshal(v.Value, &secProductInfo)
+		err2 := json.Unmarshal(v.Value, &secProductInfo)
+		err = err2
 		if err != nil {
 			logs.Error("Unmarshal sec product info failed, err:%v", err)
 			return

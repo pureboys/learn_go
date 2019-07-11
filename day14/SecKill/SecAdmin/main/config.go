@@ -39,15 +39,11 @@ func initConfig() (err error) {
 	AppConf.mysqlConf.UserName = username
 
 	mysqlPasswd := beego.AppConfig.String("mysql_passwd")
-	if len(mysqlPasswd) == 0 {
-		logs.Error("load config of mysql_passwd failed, is null")
-		return
-	}
 
 	AppConf.mysqlConf.Passwd = mysqlPasswd
 
 	mysqlHost := beego.AppConfig.String("mysql_host")
-	if len(mysqlPasswd) == 0 {
+	if len(mysqlHost) == 0 {
 		logs.Error("load config of mysql_host failed, is null")
 		return
 	}
@@ -55,7 +51,7 @@ func initConfig() (err error) {
 	AppConf.mysqlConf.Host = mysqlHost
 
 	mysqlDatabase := beego.AppConfig.String("mysql_database")
-	if len(mysqlPasswd) == 0 {
+	if len(mysqlDatabase) == 0 {
 		logs.Error("load config of mysql_database failed, is null")
 		return
 	}
