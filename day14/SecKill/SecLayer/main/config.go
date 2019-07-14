@@ -40,6 +40,13 @@ func initConfig(confType, filename string) (err error) {
 		return
 	}
 
+	appConfig.Proxy2LayerRedis.RedisQueueName = conf.String("redis::resis_proxy2layer_queue_name")
+	if len(appConfig.Proxy2LayerRedis.RedisQueueName) == 0 {
+		logs.Error("read redis::resis_proxy2layer_queue_name failed")
+		err = fmt.Errorf("read redis::resis_proxy2layer_queue_name failed")
+		return
+	}
+
 	appConfig.Proxy2LayerRedis.RedisMaxIdle, err = conf.Int("redis::redis_proxy2layer_idle")
 	if err != nil {
 		msg := "read redis::redis_proxy2layer_idle failed， err:%v"

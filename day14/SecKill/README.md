@@ -47,6 +47,7 @@ create table `activity` (
     `status` int(11) default 0,
     `buy_limit` int(11) default 1,
     `sec_speed` int(11) default 100,
+    `buy_rate` float default 0,
     primary key (`id`)
 ) engine = innodb charset = utf8    
 

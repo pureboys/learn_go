@@ -26,6 +26,7 @@ func WriteHandle() {
 			conn.Close()
 			continue
 		}
+		logs.Debug("LPUSH from redis succ, data:%s", string(data))
 
 		conn.Close()
 	}
@@ -57,7 +58,7 @@ func ReadHandle() {
 			continue
 		}
 
-		userKey := fmt.Sprintf("%s_%s", result.UserId, result.ProductId)
+		userKey := fmt.Sprintf("%d_%d", result.UserId, result.ProductId)
 
 		secKillConf.UserConnMapLock.Lock()
 		resultChan, ok := secKillConf.UserConnMap[userKey]

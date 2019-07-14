@@ -28,8 +28,9 @@ type Activity struct {
 	StartTimeStr string
 	EndTimeStr   string
 	StatusStr    string
-	Speed        int `db:"sec_speed"`
-	BuyLimit     int `db:"buy_limit"`
+	Speed        int     `db:"sec_speed"`
+	BuyLimit     int     `db:"buy_limit"`
+	BuyRate      float64 `db:"buy_rate"`
 }
 
 type SecProductInfoConf struct {
@@ -53,7 +54,7 @@ func NewActivityModel() *ActivityModel {
 }
 
 func (p *ActivityModel) GetActivityList() (activityList []*Activity, err error) {
-	sql := "select id,name,product_id, start_time, end_time,total, status, sec_speed, buy_limit from activity order by" +
+	sql := "select id,name,product_id, start_time, end_time,total, status, sec_speed, buy_limit, buy_rate from activity order by" +
 		" id desc"
 	err = Db.Select(&activityList, sql)
 	if err != nil {
@@ -142,8 +143,8 @@ func (p *ActivityModel) CreateActivity(activity *Activity) (err error) {
 		return
 	}
 
-	sql := "insert into activity(name, product_id, start_time, end_time, total, sec_speed, buy_limit)values(?,?,?,?,?,?,?)"
-	_, err = Db.Exec(sql, activity.ActivityName, activity.ProductId, activity.StartTime, activity.EndTime, activity.Total, activity.Speed, activity.BuyLimit)
+	sql := "insert into activity(name, product_id, start_time, end_time, total, sec_speed, buy_limit, buy_rate)values(?,?,?,?,?,?,?,?)"
+	_, err = Db.Exec(sql, activity.ActivityName, activity.ProductId, activity.StartTime, activity.EndTime, activity.Total, activity.Speed, activity.BuyLimit, activity.BuyRate)
 	if err != nil {
 		logs.Warn("select from mysql failed, err:%v sql:%v", err, sql)
 		return
@@ -175,6 +176,7 @@ func (p *ActivityModel) SyncToEtcd(activity *Activity) (err error) {
 	secProductInfo.StartTime = activity.StartTime
 	secProductInfo.Status = activity.Status
 	secProductInfo.Total = activity.Total
+	secProductInfo.BuyRate = activity.BuyRate
 
 	secProductInfoList = append(secProductInfoList, secProductInfo)
 	data, err := json.Marshal(secProductInfoList)
