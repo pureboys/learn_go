@@ -156,18 +156,18 @@ func loadBlackList() (err error) {
 func SyncIdBlackList() {
 	for {
 		conn := secKillConf.blackRedisPool.Get()
-		defer conn.Close()
 		reply, err := conn.Do("BLPOP", "blackidlist", time.Second)
 		id, err := redis.Int(reply, err)
 		if err != nil {
+			conn.Close()
 			continue
 		}
 
 		secKillConf.RWBlackLock.Lock()
 		secKillConf.idBlackMap[id] = true
 		secKillConf.RWBlackLock.Unlock()
-
 		logs.Info("sync id list from redis succ, ip[%v]", id)
+		conn.Close()
 	}
 }
 
@@ -177,10 +177,10 @@ func SyncIpBlackList() {
 	lastTime := time.Now().Unix()
 	for {
 		conn := secKillConf.blackRedisPool.Get()
-		defer conn.Close()
 		reply, err := conn.Do("BLPOP", "blackiplist", time.Second)
 		ip, err := redis.String(reply, err)
 		if err != nil {
+			conn.Close()
 			continue
 		}
 
@@ -197,6 +197,7 @@ func SyncIpBlackList() {
 			lastTime = curTime
 			logs.Info("sync ip list from redis succ, ip[%v]", ipList)
 		}
+		conn.Close()
 	}
 }
 

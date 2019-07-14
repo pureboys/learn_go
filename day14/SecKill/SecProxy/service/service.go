@@ -111,6 +111,9 @@ func userCheck(req *SecRequest) (err error) {
 	authData := fmt.Sprintf("%d:%s", req.UserId, secKillConf.CookieSecretKey)
 	authSign := fmt.Sprintf("%x", md5.Sum([]byte(authData)))
 
+	logs.Debug(authSign)
+	logs.Debug(req.UserAuthSign)
+
 	if authSign != req.UserAuthSign {
 		err = fmt.Errorf("invalid user cookie auth")
 		return
@@ -126,25 +129,25 @@ func SecKill(req *SecRequest) (data map[string]interface{}, code int, err error)
 	err = userCheck(req)
 	if err != nil {
 		code = ErrUserCheckAuthFailed
-		logs.Warn("userId[%d] invalid, check failed, req[%v]", req.UserId, req)
+		logs.Warn("1. userId[%d] invalid, check failed, req[%v]", req.UserId, req)
 		return
 	}
 
 	err = antiSpam(req)
 	if err != nil {
 		code = ErrUserServiceBusy
-		logs.Warn("userId[%d] invalid, check failed, req[%v]", req.UserId, req)
+		logs.Warn("2. userId[%d] invalid, check failed, req[%v]", req.UserId, req)
 		return
 	}
 
 	data, code, err = SecInfoById(req.ProductId)
 	if err != nil {
-		logs.Warn("userId[%d] secInfoBy Id failed, req[%v]", req.UserId, req)
+		logs.Warn("3. userId[%d] secInfoBy Id failed, req[%v]", req.UserId, req)
 		return
 	}
 
 	if code != 0 {
-		logs.Warn("userId[%d] secInfoByid failed, code[%d] req[%v]", req.UserId, code, req)
+		logs.Warn("4. userId[%d] secInfoByid failed, code[%d] req[%v]", req.UserId, code, req)
 		return
 	}
 
