@@ -1,9 +1,10 @@
 package main
 
 import (
+	"demo/day15/server"
 	"html/template"
 	"io/ioutil"
-	"os"
+	"net/http"
 )
 
 type Page struct {
@@ -18,14 +19,25 @@ type User struct {
 func main() {
 	tpl := loadTemplate()
 
-	data := Page{
-		Title: "demo",
-		User: []User{
-			{Username: "oliver"},
-			{Username: "hai"},
-		},
-	}
-	err := tpl.Execute(os.Stdout, data)
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		data := Page{
+			Title: "demo",
+			User: []User{
+				{Username: "oliver"},
+				{Username: "hai"},
+			},
+		}
+		err := tpl.Execute(w, data)
+		if err != nil {
+			panic(err)
+		}
+	})
+
+	srv := server.New(mux)
+
+	err := srv.ListenAndServe()
 	if err != nil {
 		panic(err)
 	}
