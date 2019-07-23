@@ -22,12 +22,14 @@ func testPing(c *gin.Context) {
 	go go1(s1)
 	go go2(s2)
 
+	ticker := time.NewTicker(time.Second * 2)
 	select {
 	case s = <-s1:
 	case s = <-s2:
-	case <-time.After(time.Second * 2):
+	case <-ticker.C:
 		fmt.Println("time out...")
 	}
+	ticker.Stop()
 
 	c.JSON(200, gin.H{
 		"message": s,
