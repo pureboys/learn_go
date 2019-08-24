@@ -46,6 +46,14 @@ func TestStruck(a interface{}) {
 	fmt.Println(val.Type())
 
 	kind := val.Kind()
+	fmt.Println(kind)
+	fmt.Println(val.Elem().Kind())
+
+	fmt.Println(val.Elem())
+
+	fmt.Println(val.Pointer())
+	fmt.Println(val.Elem().UnsafeAddr())
+
 	if kind != reflect.Ptr && val.Elem().Kind() == reflect.Struct {
 		fmt.Println("expect struct")
 		return
