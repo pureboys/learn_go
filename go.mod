@@ -15,6 +15,7 @@ require (
 	github.com/gin-gonic/gin v1.4.0
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
+	github.com/golang/protobuf v1.3.1
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/btree v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
@@ -37,6 +38,6 @@ require (
 	go.uber.org/zap v1.10.0 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/appengine v1.6.0 // indirect
-	google.golang.org/grpc v1.21.0 // indirect
+	google.golang.org/grpc v1.21.0
 	gopkg.in/olivere/elastic.v5 v5.0.81
 )
